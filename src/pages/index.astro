@@ -360,9 +360,24 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
   </div>
 </Layout>
 
-<script>
+<script define:vars={{ suburbs }}>
   const locateBtn = document.getElementById('locate-btn');
   const resultDiv = document.getElementById('location-result');
+
+  // Haversine formula to compute distance in kilometers
+  function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
 
   locateBtn?.addEventListener('click', () => {
     if (!navigator.geolocation) {
@@ -370,26 +385,87 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
       return;
     }
 
-    locateBtn.textContent = 'Scanning Nearest Operators...';
-    
+    locateBtn.textContent = 'Calculating Nearest Workshops...';
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        if (resultDiv) {
-          resultDiv.classList.remove('hidden');
-          resultDiv.innerHTML = `
-            <div class="p-4 rounded bg-zinc-950 border border-amber-500/40 text-xs font-mono text-slate-300 flex items-center justify-between">
-              <span>📍 GPS Locked: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}</span>
-              <span class="text-amber-400 font-bold">Nearest Hub: Truganina / Laverton North</span>
-            </div>
-          `;
+
+        // Calculate distance to each suburb with valid coordinates
+        const sortedSuburbs = suburbs
+          .filter((s) => s.lat && s.lng)
+          .map((s) => ({
+            ...s,
+            distanceKm: calculateDistance(latitude, longitude, s.lat, s.lng),
+          }))
+          .sort((a, b) => a.distanceKm - b.distanceKm);
+
+        const nearest = sortedSuburbs[0];
+        const secondNearest = sortedSuburbs[1];
+
+        if (!nearest || !resultDiv) {
+          locateBtn.textContent = '📍 Locate Nearest Operator';
+          return;
         }
+
+        const operators = nearest.businesses || [];
+
+        resultDiv.classList.remove('hidden');
+        resultDiv.innerHTML = `
+          <div class="mt-4 p-5 rounded-lg bg-zinc-950 border border-amber-500/60 shadow-xl space-y-4 font-mono">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+              <div>
+                <span class="text-xs text-amber-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Nearest Freight Hub Detected (${nearest.distanceKm.toFixed(1)} km)
+                </span>
+                <h3 class="text-lg font-bold text-slate-100 mt-0.5">
+                  ${nearest.suburb}, ${nearest.state} ${nearest.postcode}
+                </h3>
+              </div>
+              <a 
+                href="/${nearest.state.toLowerCase()}/${nearest.suburb.toLowerCase().replace(/\\s+/g, '-')}"
+                class="text-xs text-amber-400 hover:underline flex items-center gap-1"
+              >
+                View all in ${nearest.suburb} &rarr;
+              </a>
+            </div>
+
+            <!-- Nearest Operators List -->
+            <div class="space-y-3">
+              ${
+                operators.length > 0
+                  ? operators.slice(0, 3).map((biz) => `
+                    <div class="p-3.5 rounded bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div class="font-bold text-slate-100 text-sm">${biz.name}</div>
+                        <div class="text-xs text-slate-400 mt-0.5">📍 ${biz.address}</div>
+                        <div class="flex gap-1.5 mt-1.5">
+                          ${biz.access?.bDouble26m ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-950 text-emerald-400 border border-zinc-800">26m B-Double</span>' : ''}
+                          ${(biz.tags || []).slice(0, 2).map((t) => `<span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-950 text-slate-400 border border-zinc-800">${t}</span>`).join('')}
+                        </div>
+                      </div>
+                      <a 
+                        href="tel:${biz.phone.replace(/[^0-9+]/g, '')}"
+                        class="inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs py-2 px-3 rounded whitespace-nowrap"
+                      >
+                        📞 ${biz.phone}
+                      </a>
+                    </div>
+                  `).join('')
+                  : `<p class="text-xs text-slate-400">No registered operators directly in this hub. Next closest: <strong class="text-slate-200">${secondNearest?.suburb} (${secondNearest?.distanceKm.toFixed(1)} km)</strong>.</p>`
+              }
+            </div>
+          </div>
+        `;
+
         locateBtn.textContent = '📍 Position Locked';
       },
       () => {
         locateBtn.textContent = '📍 Locate Nearest Operator';
-        alert('Could not retrieve location. Please select your corridor above.');
-      }
+        alert('Could not retrieve GPS coordinates. Please enable browser location permissions.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   });
 </script>
