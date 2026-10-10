@@ -1,0 +1,99 @@
+---
+---
+
+<div class="mb-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+    <div>
+      <span class="text-xs font-bold uppercase tracking-wider text-amber-400">NHVR Vehicle Combination & Facility Access</span>
+      <p class="text-[11px] text-slate-400">Filter workshops by legal access clearance and physical staging capacity</p>
+    </div>
+    <span id="active-filter-count" class="text-[11px] font-mono text-slate-400">Showing all combinations</span>
+  </div>
+
+  <div class="flex flex-wrap gap-2 text-xs" id="filter-pills">
+    <button 
+      type="button" 
+      data-filter="all" 
+      class="filter-pill active rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-1.5 font-bold text-amber-300 transition"
+    >
+      All Operators
+    </button>
+    <button 
+      type="button" 
+      data-filter="b-double" 
+      class="filter-pill rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-1.5 font-medium text-slate-300 hover:border-slate-500 transition"
+    >
+      🚛 26m B-Double Cleared
+    </button>
+    <button 
+      type="button" 
+      data-filter="road-train" 
+      class="filter-pill rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-1.5 font-medium text-slate-300 hover:border-slate-500 transition"
+    >
+      🚚 Road Train / Uncoupling Pad
+    </button>
+    <button 
+      type="button" 
+      data-filter="drive-through" 
+      class="filter-pill rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-1.5 font-medium text-slate-300 hover:border-slate-500 transition"
+    >
+      🔧 Drive-Through Pit / Hoist
+    </button>
+    <button 
+      type="button" 
+      data-filter="nhvr-rwc" 
+      class="filter-pill rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-1.5 font-medium text-slate-300 hover:border-slate-500 transition"
+    >
+      📋 NHVR / Roadworthy Tester
+    </button>
+  </div>
+</div>
+
+<script>
+  const pills = document.querySelectorAll<HTMLButtonElement>('.filter-pill');
+  const cards = document.querySelectorAll<HTMLElement>('[data-biz-card="true"]');
+  const countLabel = document.getElementById('active-filter-count');
+
+  pills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      pills.forEach((p) => {
+        p.classList.remove('active', 'border-amber-500/50', 'bg-amber-500/10', 'text-amber-300');
+        p.classList.add('border-slate-700', 'bg-slate-800/80', 'text-slate-300');
+      });
+
+      pill.classList.add('active', 'border-amber-500/50', 'bg-amber-500/10', 'text-amber-300');
+      pill.classList.remove('border-slate-700', 'bg-slate-800/80', 'text-slate-300');
+
+      const filter = pill.getAttribute('data-filter') || 'all';
+      let visible = 0;
+
+      cards.forEach((card) => {
+        const capabilities = (card.getAttribute('data-capabilities') || '').toLowerCase();
+        
+        let match = false;
+        if (filter === 'all') {
+          match = true;
+        } else if (filter === 'b-double') {
+          match = capabilities.includes('b-double') || capabilities.includes('prime mover');
+        } else if (filter === 'road-train') {
+          match = capabilities.includes('road train') || capabilities.includes('multi-combination') || capabilities.includes('uncoupling');
+        } else if (filter === 'drive-through') {
+          match = capabilities.includes('pit') || capabilities.includes('hoist') || capabilities.includes('drive-through') || capabilities.includes('bay');
+        } else if (filter === 'nhvr-rwc') {
+          match = capabilities.includes('roadworthy') || capabilities.includes('tester') || capabilities.includes('rwc') || capabilities.includes('compliance');
+        }
+
+        if (match) {
+          card.classList.remove('hidden');
+          visible++;
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      if (countLabel) {
+        countLabel.textContent = `Showing ${visible} of ${cards.length} matched operators`;
+      }
+    });
+  });
+</script>

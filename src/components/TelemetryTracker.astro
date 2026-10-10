@@ -1,0 +1,49 @@
+---
+---
+
+<script is:inline>
+  function logDirectoryEvent(eventName, eventData) {
+    var data = eventData || {};
+    if (window.location.hostname === 'localhost') {
+      console.log('[Telemetry Dev]', eventName, data);
+      return;
+    }
+
+    var payload = JSON.stringify({
+      event: eventName,
+      data: data,
+      url: window.location.pathname,
+      timestamp: new Date().toISOString()
+    });
+
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/telemetry/', payload);
+    } else {
+      fetch('/api/telemetry/', { method: 'POST', body: payload, keepalive: true });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // 1. Monitor emergency call clicks
+    document.querySelectorAll('a[href^="tel:"]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var card = btn.closest('[data-biz-card="true"]') || btn.closest('article');
+        var bizName = (card && card.querySelector('h3')) ? card.querySelector('h3').textContent.trim() : 'Unknown Operator';
+        logDirectoryEvent('dispatch_call_click', { business: bizName });
+      });
+    });
+
+    // 2. Monitor PWA Home Screen Installation
+    window.addEventListener('appinstalled', function () {
+      logDirectoryEvent('pwa_install_success');
+    });
+
+    // 3. Monitor GPS locator button taps
+    var gpsBtn = document.getElementById('locate-me-btn');
+    if (gpsBtn) {
+      gpsBtn.addEventListener('click', function () {
+        logDirectoryEvent('gps_locate_trigger');
+      });
+    }
+  });
+</script>

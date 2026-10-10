@@ -1,0 +1,149 @@
+---
+---
+
+<div id="claim-modal-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="relative w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+    <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🛠️</span>
+        <div>
+          <h3 class="text-base font-bold text-white">Workshop Owner Verification</h3>
+          <p class="text-[11px] text-slate-400">Update line-haul dispatch & access specs</p>
+        </div>
+      </div>
+      <button id="close-claim-modal" type="button" class="text-slate-400 hover:text-white text-lg p-1">✕</button>
+    </div>
+
+    <form id="claim-form" class="mt-4 space-y-4 text-xs">
+      <div>
+        <label class="block font-semibold text-slate-300 mb-1">Target Business Listing</label>
+        <input id="claim-biz-name" type="text" readonly class="w-full rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2 font-mono text-amber-400 font-bold focus:outline-none cursor-not-allowed" />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Contact Name *</label>
+          <input id="claim-contact-name" type="text" required placeholder="e.g. Dave Miller (Manager)" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-amber-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Direct Workshop Phone *</label>
+          <input id="claim-phone" type="tel" required placeholder="e.g. 0412 345 678" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-amber-500 focus:outline-none" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Business Email *</label>
+          <input id="claim-email" type="email" required placeholder="service@workshop.com.au" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-amber-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Workshop ABN (11 Digits)</label>
+          <input id="claim-abn" type="text" placeholder="e.g. 51 824 753 556" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-amber-500 focus:outline-none" />
+        </div>
+      </div>
+
+      <!-- Capability Checkboxes -->
+      <div class="space-y-2 pt-2 border-t border-slate-800">
+        <span class="block font-semibold text-slate-300">Verify Operational Capabilities:</span>
+        <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+          <input id="claim-247" type="checkbox" class="rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0" />
+          <span>Active 24/7 Mobile Roadside Emergency Dispatch Unit</span>
+        </label>
+        <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+          <input id="claim-bdouble" type="checkbox" class="rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0" />
+          <span>B-Double / Road Train Cleared Yard & Drive-Through Access</span>
+        </label>
+        <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+          <input id="claim-rwc" type="checkbox" class="rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0" />
+          <span>Accredited Heavy Vehicle Roadworthy Inspection Station</span>
+        </label>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-300 mb-1">Additional Notes / Correction Details</label>
+        <textarea id="claim-notes" rows="2" placeholder="List engine certifications (Cummins, Detroit), new addresses, or after-hours mobile contacts..." class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-amber-500 focus:outline-none"></textarea>
+      </div>
+
+      <div id="claim-feedback" class="hidden rounded-lg p-3 text-xs font-semibold"></div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+        <button id="cancel-claim-btn" type="button" class="rounded-lg border border-slate-700 px-4 py-2 text-slate-300 hover:bg-slate-800">Cancel</button>
+        <button id="submit-claim-btn" type="submit" class="rounded-lg bg-amber-500 px-4 py-2 font-bold text-black hover:bg-amber-400 active:scale-95 transition">Submit Verification</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const backdrop = document.getElementById('claim-modal-backdrop');
+  const closeBtn = document.getElementById('close-claim-modal');
+  const cancelBtn = document.getElementById('cancel-claim-btn');
+  const form = document.getElementById('claim-form') as HTMLFormElement | null;
+  const bizNameInput = document.getElementById('claim-biz-name') as HTMLInputElement | null;
+  const feedback = document.getElementById('claim-feedback');
+
+  function openModal(bizName: string) {
+    if (bizNameInput) bizNameInput.value = bizName;
+    if (feedback) feedback.classList.add('hidden');
+    if (backdrop) backdrop.classList.remove('hidden');
+  }
+
+  function closeModal() {
+    if (backdrop) backdrop.classList.add('hidden');
+    if (form) form.reset();
+  }
+
+  document.querySelectorAll('[data-claim-trigger]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const name = (btn as HTMLElement).getAttribute('data-biz-name') || 'Workshop';
+      openModal(name);
+    });
+  });
+
+  closeBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', closeModal);
+  backdrop?.addEventListener('click', (e) => {
+    if (e.target === backdrop) closeModal();
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!feedback) return;
+
+    const payload = {
+      businessName: bizNameInput?.value || '',
+      contactName: (document.getElementById('claim-contact-name') as HTMLInputElement)?.value,
+      phone: (document.getElementById('claim-phone') as HTMLInputElement)?.value,
+      email: (document.getElementById('claim-email') as HTMLInputElement)?.value,
+      abn: (document.getElementById('claim-abn') as HTMLInputElement)?.value,
+      afterHoursDispatch: (document.getElementById('claim-247') as HTMLInputElement)?.checked,
+      bDoubleAccess: (document.getElementById('claim-bdouble') as HTMLInputElement)?.checked,
+      rwcTester: (document.getElementById('claim-rwc') as HTMLInputElement)?.checked,
+      notes: (document.getElementById('claim-notes') as HTMLTextAreaElement)?.value
+    };
+
+    try {
+      feedback.className = 'rounded-lg p-3 text-xs font-semibold bg-amber-500/20 text-amber-300 block';
+      feedback.textContent = 'Verifying and submitting listing details...';
+
+      const res = await fetch('/api/claim-listing/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const json = await res.json();
+      if (res.ok) {
+        feedback.className = 'rounded-lg p-3 text-xs font-semibold bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 block';
+        feedback.textContent = '✔ Request received! A verification confirmation has been logged for this listing.';
+        setTimeout(() => closeModal(), 2000);
+      } else {
+        throw new Error(json.error || 'Submission failed');
+      }
+    } catch (err: any) {
+      feedback.className = 'rounded-lg p-3 text-xs font-semibold bg-red-950/80 border border-red-500/40 text-red-300 block';
+      feedback.textContent = `✖ ${err.message || 'Unable to submit online. Please call or email directly.'}`;
+    }
+  });
+</script>

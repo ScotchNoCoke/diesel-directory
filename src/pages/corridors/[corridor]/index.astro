@@ -1,0 +1,165 @@
+---
+import '../../../styles/global.css';
+import type { GetStaticPaths } from 'astro';
+import suburbsData from '../../../data/suburbs.json';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  return [
+    { 
+      params: { corridor: 'hume-freeway-m31' }, 
+      props: { 
+        name: 'Hume Highway (M31) Sydney–Melbourne Trans-Border Corridor', 
+        hubs: [
+          'campbellfield',
+          'seymour',
+          'wodonga',
+          'albury',
+          'holbrook',
+          'gundagai',
+          'yass',
+          'goulburn',
+          'prestons'
+        ],
+        badge: 'Melbourne ↔ Sydney Full Line-Haul Route (M31)'
+      } 
+    },
+    { 
+      params: { corridor: 'western-highway-m8' }, 
+      props: { 
+        name: 'Western & Dukes Highway (M8 / A8) Melbourne–Adelaide Corridor', 
+        hubs: [
+          'truganina',
+          'ballarat',
+          'horsham',
+          'nhill',
+          'bordertown',
+          'keith',
+          'tailem-bend',
+          'wingfield'
+        ],
+        badge: 'Melbourne ↔ Adelaide Full Line-Haul Route (M8 / A8)'
+      } 
+    },
+    { 
+      params: { corridor: 'princes-freeway-m1' }, 
+      props: { 
+        name: 'Princes Freeway (M1) Port Intermodal Precinct', 
+        hubs: ['truganina', 'laverton-north'],
+        badge: 'Port of Melbourne & Western Arterials'
+      } 
+    },
+    { 
+      params: { corridor: 'eastlink-monash' }, 
+      props: { 
+        name: 'EastLink & Monash (M3 / M1) Industrial Belt', 
+        hubs: ['bayswater', 'dandenong-south'],
+        badge: 'South-Eastern & Gippsland Gateway'
+      } 
+    }
+  ];
+};
+
+const { corridor } = Astro.params;
+const { name, hubs, badge } = Astro.props;
+
+// Preserve sequential order of hubs along the highway
+const corridorHubs = hubs
+  .map(slug => suburbsData.find(s => s.suburb === slug))
+  .filter(Boolean);
+
+const totalMechanics = corridorHubs.reduce((acc, h) => acc + (h ? h.businesses.length : 0), 0);
+
+const siteUrl = Astro.site ? Astro.site.toString().replace(/\/$/, '') : 'https://melbournedieselmechanics.com.au';
+const canonicalUrl = `${siteUrl}/corridors/${corridor}/`;
+const pageTitle = `${name} Heavy Diesel Breakdown & Workshop Directory`;
+const pageDescription = `Complete directory of heavy commercial truck mechanics, B-double yards, and 24/7 roadside breakdown response units along the ${name}.`;
+---
+
+<!doctype html>
+<html lang="en-AU" class="bg-slate-950 text-slate-100 antialiased selection:bg-amber-500 selection:text-black">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonicalUrl} />
+  </head>
+  <body class="min-h-screen">
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+      <div class="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
+        <a href="/" class="font-extrabold text-white text-base">HEAVY COMMERCIAL DIESEL DIRECTORY</a>
+        <a href="/" class="text-xs text-amber-400 hover:underline">&larr; Back to Statewide Index</a>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-6xl px-4 py-12">
+      <section class="max-w-3xl mb-10">
+        <span class="rounded bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-400 border border-amber-500/20 mb-3 inline-block">
+          {badge}
+        </span>
+        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
+          {name}
+        </h1>
+        <p class="text-slate-400 text-lg leading-relaxed">
+          {totalMechanics} verified heavy vehicle repairers and mobile breakdown crews sequenced along the {name} corridor.
+        </p>
+      </section>
+
+      <section class="space-y-12">
+        {corridorHubs.map((hub, hubIndex) => (
+          <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 sm:p-8">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 border-b border-slate-800 pb-4">
+              <div>
+                <div class="flex items-center gap-2.5">
+                  <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-xs font-mono font-bold text-amber-400">
+                    {hubIndex + 1}
+                  </span>
+                  <h2 class="text-2xl font-bold text-white capitalize">{hub.suburb.replace('-', ' ')} Staging Hub</h2>
+                  <span class="text-xs font-mono uppercase bg-slate-800 text-amber-400 px-2 py-0.5 rounded border border-slate-700">
+                    {hub.state.toUpperCase()} {hub.postcode}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-400 mt-2 max-w-2xl">{hub.localOverview}</p>
+              </div>
+              <a href={`/${hub.state}/${hub.suburb}/`} class="text-xs font-bold text-amber-400 hover:underline shrink-0">
+                View All {hub.businesses.length} Operators &rarr;
+              </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {hub.businesses.map((biz) => {
+                const hasRapid = biz.tags.some((t: string) => /24\/7|breakdown|emergency|roadside|hotline/i.test(t));
+
+                return (
+                  <div class="rounded-xl border border-slate-800 bg-slate-900/90 p-5 flex flex-col justify-between">
+                    <div>
+                      <div class="flex items-start justify-between gap-2 mb-1">
+                        <h3 class="font-bold text-white text-base">{biz.name}</h3>
+                        {hasRapid && (
+                          <span class="rounded bg-red-950/80 border border-red-500/40 text-[10px] font-bold text-red-400 px-1.5 py-0.5 shrink-0">
+                            24/7
+                          </span>
+                        )}
+                      </div>
+                      <p class="text-xs text-slate-400 mb-2">{biz.address}</p>
+                      <p class="text-xs text-slate-300 line-clamp-2 mb-4 leading-relaxed">{biz.editorialSummary}</p>
+                    </div>
+                    <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+                      <span class="text-xs font-mono font-bold text-white">{biz.phone}</span>
+                      <a 
+                        href={`tel:${biz.phone.replace(/\s+/g, '')}`} 
+                        class={`rounded px-3 py-1.5 text-xs font-bold transition ${hasRapid ? 'bg-red-500 text-white hover:bg-red-400' : 'bg-amber-500 text-black hover:bg-amber-400'}`}
+                      >
+                        📞 Call
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "Victorian Heavy Commercial Diesel & Breakdown Directory",
+  "short_name": "Heavy Diesel VIC",
+  "description": "Offline-ready heavy diesel mechanic & 24/7 breakdown directory for Victorian freight corridors.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

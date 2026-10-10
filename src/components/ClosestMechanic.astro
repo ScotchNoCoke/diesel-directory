@@ -1,0 +1,270 @@
+---
+---
+
+<div id="geo-card" class="mb-10 rounded-2xl border border-amber-500/30 bg-slate-900/90 p-6 sm:p-7 shadow-lg">
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Emergency GPS Dispatch</span>
+      </div>
+      <h2 class="text-xl sm:text-2xl font-bold text-white">Find Closest Mechanic to Your Current Location</h2>
+      <p class="text-xs sm:text-sm text-slate-400" id="geo-status">
+        Tap below to detect your current position along Victoria's freight corridors.
+      </p>
+    </div>
+
+    <button
+      id="geo-trigger-btn"
+      type="button"
+      class="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-black hover:bg-amber-400 active:scale-95 transition shadow-md cursor-pointer"
+    >
+      <span>📍 Locate Nearest Operator</span>
+    </button>
+  </div>
+
+  <!-- Dynamic Result Container -->
+  <div id="closest-result" class="hidden mt-6 pt-6 border-t border-slate-800">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+      <div class="space-y-2 flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded bg-amber-500 text-black text-[11px] font-bold px-2 py-0.5" id="res-distance">0 km away</span>
+          <span class="rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-medium px-2 py-0.5" id="res-badge">Dispatch Available</span>
+          <span id="res-rapid-tag" class="hidden items-center gap-1.5 rounded-full bg-red-950 border border-red-500/40 px-2.5 py-0.5 text-[11px] font-bold text-red-400">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+            24/7 RAPID DISPATCH
+          </span>
+          <span class="text-xs text-slate-400" id="res-hub">Hub</span>
+        </div>
+        <h3 class="text-lg font-bold text-white" id="res-name">Operator Name</h3>
+        <p class="text-xs text-slate-300" id="res-address">Address</p>
+      </div>
+
+      <!-- Action Buttons Row -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <a
+          id="res-call-btn"
+          href="#"
+          class="inline-flex items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-red-400 transition font-mono shadow-md"
+        >
+          📞 Call (<span id="res-phone"></span>)
+        </a>
+        <a
+          id="res-sms-btn"
+          href="#"
+          class="inline-flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 transition"
+        >
+          💬 SMS My GPS
+        </a>
+        <button
+          id="res-copy-btn"
+          type="button"
+          class="inline-flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 transition cursor-pointer"
+        >
+          📋 Copy Pin
+        </button>
+        <a
+          id="res-hub-link"
+          href="#"
+          class="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-xs font-semibold text-amber-400 hover:bg-slate-800 transition"
+        >
+          View Hub &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Highway Quick Filter Strip -->
+  <div class="mt-6 pt-5 border-t border-slate-800/80 flex flex-wrap items-center gap-2">
+    <span class="text-xs font-bold text-slate-400 mr-1">Emergency Filter:</span>
+    <button type="button" data-filter="all" class="filter-btn rounded-lg bg-amber-500 text-black px-3 py-1 text-xs font-bold transition">
+      All Operators (54)
+    </button>
+    <button type="button" data-filter="247" class="filter-btn rounded-lg bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 text-xs font-medium hover:border-red-500 hover:text-white transition">
+      🚨 24/7 Breakdown Only
+    </button>
+    <button type="button" data-filter="bdouble" class="filter-btn rounded-lg bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 text-xs font-medium hover:border-amber-500 hover:text-white transition">
+      ⚖️ B-Double & Road Train
+    </button>
+    <button type="button" data-filter="rwc" class="filter-btn rounded-lg bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 text-xs font-medium hover:border-emerald-500 hover:text-white transition">
+      📋 VicRoads RWC Testers
+    </button>
+  </div>
+</div>
+
+<script>
+  function getDistanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  const btn = document.getElementById('geo-trigger-btn');
+  const statusText = document.getElementById('geo-status');
+  const resultContainer = document.getElementById('closest-result');
+  const resDistance = document.getElementById('res-distance');
+  const resBadge = document.getElementById('res-badge');
+  const resRapidTag = document.getElementById('res-rapid-tag');
+  const resHub = document.getElementById('res-hub');
+  const resName = document.getElementById('res-name');
+  const resAddress = document.getElementById('res-address');
+  const resPhone = document.getElementById('res-phone');
+  const resCallBtn = document.getElementById('res-call-btn');
+  const resSmsBtn = document.getElementById('res-sms-btn');
+  const resCopyBtn = document.getElementById('res-copy-btn');
+  const resHubLink = document.getElementById('res-hub-link');
+
+  let currentLat = null;
+  let currentLng = null;
+
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      if (!navigator.geolocation) {
+        if (statusText) statusText.textContent = 'Geolocation is not supported by your browser.';
+        return;
+      }
+
+      if (statusText) statusText.textContent = 'Connecting to GPS satellites...';
+      btn.setAttribute('disabled', 'true');
+      btn.classList.add('opacity-50');
+
+      try {
+        const response = await fetch('/api/locations.json');
+        const hubs = await response.json();
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            currentLat = pos.coords.latitude;
+            currentLng = pos.coords.longitude;
+
+            let closestHub = null;
+            let minDistance = Infinity;
+
+            for (const hub of hubs) {
+              if (hub.lat && hub.lng) {
+                const dist = getDistanceKm(currentLat, currentLng, hub.lat, hub.lng);
+                if (dist < minDistance) {
+                  minDistance = dist;
+                  closestHub = hub;
+                }
+              }
+            }
+
+            if (closestHub && closestHub.businesses && closestHub.businesses.length > 0) {
+              const topBiz = closestHub.businesses[0];
+              const distRounded = minDistance.toFixed(1);
+
+              if (statusText) statusText.textContent = `Found nearest corridor base: ${closestHub.suburb.toUpperCase()} (~${distRounded} km).`;
+              if (resDistance) resDistance.textContent = `~${distRounded} km away`;
+              
+              if (resBadge) {
+                if (minDistance <= 25) {
+                  resBadge.textContent = 'Rapid Local Dispatch';
+                } else if (minDistance <= 75) {
+                  resBadge.textContent = 'Mobile Roadside Unit';
+                } else {
+                  resBadge.textContent = 'Regional Line-Haul Callout';
+                }
+              }
+
+              const is247 = topBiz.tags && topBiz.tags.some((t: string) => /24\/7|breakdown|emergency|roadside|hotline/i.test(t));
+              if (resRapidTag) {
+                if (is247) {
+                  resRapidTag.classList.remove('hidden');
+                  resRapidTag.classList.add('inline-flex');
+                } else {
+                  resRapidTag.classList.add('hidden');
+                  resRapidTag.classList.remove('inline-flex');
+                }
+              }
+
+              if (resHub) resHub.textContent = `Hub: ${closestHub.suburb.toUpperCase()}`;
+              if (resName) resName.textContent = topBiz.name;
+              if (resAddress) resAddress.textContent = topBiz.address;
+              if (resPhone) resPhone.textContent = topBiz.phone;
+              
+              const rawPhone = topBiz.phone.replace(/\s+/g, '');
+              if (resCallBtn) resCallBtn.setAttribute('href', `tel:${rawPhone}`);
+              if (resHubLink) resHubLink.setAttribute('href', `/${closestHub.state}/${closestHub.suburb}/`);
+
+              // Emergency SMS link prefilled with GPS coordinates
+              const mapsUrl = `https://maps.google.com/?q=${currentLat.toFixed(5)},${currentLng.toFixed(5)}`;
+              const smsMessage = encodeURIComponent(`URGENT: Heavy vehicle breakdown dispatch request.\nLocation: Lat ${currentLat.toFixed(5)}, Lng ${currentLng.toFixed(5)}\nMap Pin: ${mapsUrl}`);
+              if (resSmsBtn) resSmsBtn.setAttribute('href', `sms:${rawPhone}?body=${smsMessage}`);
+
+              // Copy GPS Pin directly to clipboard
+              if (resCopyBtn) {
+                resCopyBtn.onclick = () => {
+                  navigator.clipboard.writeText(`Heavy Vehicle Breakdown Location: ${mapsUrl}`);
+                  const originalText = resCopyBtn.textContent;
+                  resCopyBtn.textContent = '✓ Copied!';
+                  setTimeout(() => { resCopyBtn.textContent = originalText; }, 2000);
+                };
+              }
+
+              if (resultContainer) resultContainer.classList.remove('hidden');
+            }
+
+            btn.removeAttribute('disabled');
+            btn.classList.remove('opacity-50');
+          },
+          (err) => {
+            btn.removeAttribute('disabled');
+            btn.classList.remove('opacity-50');
+            if (statusText) {
+              statusText.textContent = err.code === 1 
+                ? 'Location permission was denied. Please browse the corridors below.' 
+                : 'Unable to retrieve location. Please browse below.';
+            }
+          },
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      } catch (err) {
+        btn.removeAttribute('disabled');
+        btn.classList.remove('opacity-50');
+        if (statusText) statusText.textContent = 'Error loading corridor dataset.';
+      }
+    });
+  }
+
+  // Client-side quick filter logic
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => {
+        b.classList.remove('bg-amber-500', 'text-black', 'font-bold');
+        b.classList.add('bg-slate-800', 'text-slate-300', 'font-medium');
+      });
+      btn.classList.remove('bg-slate-800', 'text-slate-300', 'font-medium');
+      btn.classList.add('bg-amber-500', 'text-black', 'font-bold');
+
+      const filterType = btn.getAttribute('data-filter');
+      const cards = document.querySelectorAll<HTMLElement>('[data-hub-card]');
+
+      cards.forEach(card => {
+        const has247 = card.getAttribute('data-has-247') === 'true';
+        const hasBdouble = card.getAttribute('data-has-bdouble') === 'true';
+        const hasRwc = card.getAttribute('data-has-rwc') === 'true';
+
+        if (filterType === 'all') {
+          card.style.display = 'flex';
+        } else if (filterType === '247') {
+          card.style.display = has247 ? 'flex' : 'none';
+        } else if (filterType === 'bdouble') {
+          card.style.display = hasBdouble ? 'flex' : 'none';
+        } else if (filterType === 'rwc') {
+          card.style.display = hasRwc ? 'flex' : 'none';
+        }
+      });
+    });
+  });
+</script>
