@@ -1,23 +1,86 @@
+---
+import '../styles/global.css';
+
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const {
+	title = "DieselHub | Heavy Transport & Linehaul Breakdown Directory",
+	description = "24/7 heavy vehicle breakdown directory and NHVR combination access staging across Australian freight corridors.",
+} = Astro.props;
+---
+
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark scroll-smooth bg-zinc-950 text-slate-100 antialiased">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+
+		<!-- Favicons & App Icons -->
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<link rel="manifest" href="/manifest.webmanifest" />
+
+		<!-- Browser Chrome & Status Bar Styling -->
+		<meta name="theme-color" content="#09090B" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	</head>
-	<body>
-		<slot />
+	<body class="min-h-screen flex flex-col bg-zinc-950 font-sans selection:bg-amber-500 selection:text-zinc-950">
+		<!-- Sticky Top Navigation -->
+		<header class="sticky top-0 z-50 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+				<!-- Master Linehaul Shield Logo -->
+				<a href="/" class="flex items-center gap-2 group py-2" aria-label="DieselHub Home">
+					<img
+						src="/dieselhub-logo.svg"
+						alt="DieselHub"
+						class="h-12 sm:h-14 w-auto transition-transform group-hover:scale-[1.01]"
+						loading="eager"
+					/>
+				</a>
+
+				<!-- Quick Corridor Status & Emergency Action -->
+				<div class="flex items-center gap-3">
+					<div class="hidden md:flex items-center gap-2 text-xs font-mono text-slate-400 bg-zinc-900 px-3 py-1.5 rounded border border-zinc-800">
+						<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+						<span>CORRIDOR DISPATCH ACTIVE</span>
+					</div>
+
+					<a
+						href="tel:1800000000"
+						class="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-black text-xs uppercase tracking-wider px-4 py-2.5 rounded shadow-lg shadow-amber-500/10 transition-colors"
+					>
+						<span>Emergency Dispatch</span>
+					</a>
+				</div>
+			</div>
+
+			<!-- Industrial Hazard Accent Line -->
+			<div class="h-1 w-full bg-hazard-stripes opacity-90"></div>
+		</header>
+
+		<!-- Main Content Area -->
+		<main class="flex-1">
+			<slot />
+		</main>
+
+		<!-- Footer -->
+		<footer class="bg-zinc-900 border-t border-zinc-800 mt-20">
+			<div class="h-1 w-full bg-hazard-stripes opacity-40"></div>
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+				<p class="text-xs text-slate-400 font-mono">
+					&copy; {new Date().getFullYear()} DieselHub. Heavy Vehicle &amp; Linehaul Breakdown Directory.
+				</p>
+				<div class="flex gap-2 text-[11px] font-mono text-slate-400">
+					<span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800">26m B-Double</span>
+					<span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800">36m Road Train</span>
+					<span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-amber-500/90">NHVR Verified</span>
+				</div>
+			</div>
+		</footer>
 	</body>
 </html>
-
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>
