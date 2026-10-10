@@ -20,173 +20,138 @@ const highwayArteries = [
 ];
 ---
 
-<!doctype html>
-<html lang="en-AU" class="bg-slate-950 text-slate-100 antialiased selection:bg-amber-500 selection:text-black">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Victorian Heavy Commercial Diesel & Breakdown Directory</title>
-    <meta name="description" content="Statewide directory of verified heavy commercial diesel mechanics, fleet workshops, and 24/7 mobile emergency breakdown units across Victoria." />
-    <meta property="og:site_name" content="Victorian Heavy Commercial Diesel & Breakdown Directory" />
-    <meta property="og:title" content="Victorian Heavy Commercial Diesel & Breakdown Directory" />
+<Layout 
+  title="DieselHub | Australian Heavy Transport & Linehaul Breakdown Directory"
+  description="Statewide directory of verified heavy commercial diesel mechanics, fleet workshops, and 24/7 mobile emergency breakdown units across Victoria."
+>
+  <!-- Offline Dead-Zone Banner -->
+  <div id="offline-banner" class="hidden sticky top-20 z-50 bg-amber-600 text-black px-4 py-2 text-xs font-bold text-center tracking-wide shadow-md">
+    📡 ZERO-SIGNAL MODE ACTIVE — Local directory cached &amp; GPS satellite dispatch operational.
+  </div>
 
-    <!-- PWA Settings -->
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#020617" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Heavy Diesel VIC" />
-  </head>
-  <body class="min-h-screen">
-    <!-- Offline Dead-Zone Banner -->
-    <div id="offline-banner" class="hidden sticky top-0 z-50 bg-amber-600 text-black px-4 py-2 text-xs font-bold text-center tracking-wide shadow-md">
-      📡 ZERO-SIGNAL MODE ACTIVE — Local directory cached & GPS satellite dispatch operational.
-    </div>
-
-    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
-      <div class="mx-auto max-w-6xl px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <a href="/" class="flex items-center gap-2.5 group">
-          <span class="text-2xl">🚛</span>
-          <div class="flex flex-col">
-            <span class="font-extrabold tracking-tight text-white text-base sm:text-lg leading-tight group-hover:text-amber-400 transition">
-              VICTORIAN HEAVY COMMERCIAL DIESEL
-            </span>
-            <span class="text-[11px] font-semibold tracking-wider text-amber-500 uppercase">
-              & Breakdown Directory
-            </span>
-          </div>
-        </a>
-        <div class="flex items-center gap-2">
-          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-            Offline Enabled
-          </span>
-          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            Statewide Freight Network
-          </span>
-        </div>
+  <div class="mx-auto max-w-6xl px-4 py-8 space-y-10">
+    <!-- Hero Header Block -->
+    <section class="max-w-3xl space-y-3">
+      <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-amber-500 font-mono text-xs font-bold uppercase tracking-wider">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        Verified Freight Corridors Active
       </div>
-    </header>
+      <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+        Heavy Transport &amp; Linehaul <span class="text-amber-500">Breakdown Directory</span>
+      </h1>
+      <p class="text-slate-400 text-base sm:text-lg leading-relaxed">
+        An open index of {totalVerified} verified heavy vehicle repairers covering Victoria's critical transport arterials, freight hubs, and interstate highway corridors.
+      </p>
+    </section>
 
-    <main class="mx-auto max-w-6xl px-4 py-12">
-      <section class="max-w-3xl mb-10">
-        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
-          Victorian Heavy Commercial Diesel & Breakdown Directory
-        </h1>
-        <p class="text-slate-400 text-base sm:text-lg leading-relaxed">
-          An open index of {totalVerified} verified heavy vehicle repairers covering Victoria's critical transport arterials, freight hubs, and interstate highway corridors.
-        </p>
-      </section>
+    <!-- GPS Locator Card & Emergency Filter Bar -->
+    <ClosestMechanic />
 
-      <!-- GPS Locator Card & Emergency Filter Bar -->
-      <ClosestMechanic />
-
-      <!-- Highway Route Quick Jump Strip -->
-      <section class="mb-12 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 sm:p-6">
-        <div class="flex items-center gap-2 mb-3">
-          <span class="text-sm">🛣️</span>
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Fast Highway Route Corridors:</h2>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {highwayArteries.map((art) => (
-            <a href={`/corridors/${art.slug}/`} class="group rounded-xl border border-slate-800 bg-slate-950/60 p-3.5 space-y-1 hover:border-amber-500/50 transition">
-              <span class="block text-xs font-bold text-amber-400 group-hover:underline">{art.name} &rarr;</span>
-              <p class="text-[11px] text-slate-400">{art.hubs}</p>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <!-- Corridors Section -->
-      <section class="space-y-12">
-        {Object.entries(corridorMap).map(([corridorName, suburbs]) => (
-          <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 sm:p-8">
-            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
-              {corridorName}
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {suburbs.map((sub) => {
-                const has247 = sub.businesses.some((b) => b.tags.some((t) => /24\/7|breakdown|emergency|roadside|hotline/i.test(t)));
-                const hasBdouble = sub.businesses.some((b) => b.tags.some((t) => /b-double|road train|combination/i.test(t)));
-                const hasRwc = sub.businesses.some((b) => b.tags.some((t) => /rwc|roadworthy|tester/i.test(t)));
-
-                return (
-                  <a
-                    href={`/${sub.state}/${sub.suburb}/`}
-                    data-hub-card="true"
-                    data-has-247={has247 ? "true" : "false"}
-                    data-has-bdouble={hasBdouble ? "true" : "false"}
-                    data-has-rwc={hasRwc ? "true" : "false"}
-                    class="group flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-900/90 p-5 hover:border-amber-500/50 hover:bg-slate-800/80 transition"
-                  >
-                    <div>
-                      <div class="flex justify-between items-center mb-2">
-                        <span class="font-bold text-lg text-white group-hover:text-amber-400 capitalize">
-                          {sub.suburb.replace('-', ' ')}
-                        </span>
-                        <span class="font-mono text-xs text-slate-400">{sub.postcode}</span>
-                      </div>
-                      <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-4">
-                        {sub.localOverview}
-                      </p>
-                    </div>
-
-                    <div class="space-y-3 pt-3 border-t border-slate-800">
-                      <div class="flex flex-wrap gap-1.5">
-                        {has247 && (
-                          <span class="rounded bg-red-950/80 border border-red-500/30 text-[10px] font-bold text-red-400 px-1.5 py-0.5">
-                            24/7 Units
-                          </span>
-                        )}
-                        {hasBdouble && (
-                          <span class="rounded bg-slate-800 text-[10px] text-slate-300 px-1.5 py-0.5 border border-slate-700">
-                            B-Double Yard
-                          </span>
-                        )}
-                        {hasRwc && (
-                          <span class="rounded bg-emerald-950/80 border border-emerald-500/30 text-[10px] text-emerald-400 px-1.5 py-0.5">
-                            RWC Licensed
-                          </span>
-                        )}
-                      </div>
-                      <div class="text-xs font-semibold text-amber-500 flex items-center justify-between">
-                        <span>{sub.businesses.length} Verified Operators</span>
-                        <span>View Hub &rarr;</span>
-                      </div>
-                    </div>
-                  </a>
-                );
-              })}
-            </div>
-          </div>
+    <!-- Highway Route Quick Jump Strip -->
+    <section class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 shadow-lg">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-sm">🛣️</span>
+        <h2 class="text-xs font-bold font-mono uppercase tracking-wider text-slate-300">Fast Highway Route Corridors:</h2>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {highwayArteries.map((art) => (
+          <a href={`/corridors/${art.slug}/`} class="group rounded-xl border border-zinc-800 bg-zinc-950/70 p-3.5 space-y-1 hover:border-amber-500/50 transition">
+            <span class="block text-xs font-bold text-amber-400 group-hover:underline">{art.name} &rarr;</span>
+            <p class="text-[11px] text-slate-400 font-mono">{art.hubs}</p>
+          </a>
         ))}
-      </section>
-    </main>
+      </div>
+    </section>
 
-    <!-- PWA & Offline Listener Script -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch((err) => {
-            console.warn('SW registration skipped:', err);
-          });
+    <!-- Corridors Section -->
+    <section class="space-y-10">
+      {Object.entries(corridorMap).map(([corridorName, suburbs]) => (
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 sm:p-8">
+          <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+            {corridorName}
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {suburbs.map((sub) => {
+              const has247 = sub.businesses.some((b) => b.tags.some((t) => /24\/7|breakdown|emergency|roadside|hotline/i.test(t)));
+              const hasBdouble = sub.businesses.some((b) => b.tags.some((t) => /b-double|road train|combination/i.test(t)));
+              const hasRwc = sub.businesses.some((b) => b.tags.some((t) => /rwc|roadworthy|tester/i.test(t)));
+
+              return (
+                <a
+                  href={`/${sub.state}/${sub.suburb}/`}
+                  data-hub-card="true"
+                  data-has-247={has247 ? "true" : "false"}
+                  data-has-bdouble={hasBdouble ? "true" : "false"}
+                  data-has-rwc={hasRwc ? "true" : "false"}
+                  class="group flex flex-col justify-between rounded-xl border border-zinc-800 bg-zinc-950/80 p-5 hover:border-amber-500/50 hover:bg-zinc-900/80 transition"
+                >
+                  <div>
+                    <div class="flex justify-between items-center mb-2">
+                      <span class="font-bold text-lg text-white group-hover:text-amber-400 capitalize">
+                        {sub.suburb.replace('-', ' ')}
+                      </span>
+                      <span class="font-mono text-xs text-slate-400">{sub.postcode}</span>
+                    </div>
+                    <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-4">
+                      {sub.localOverview}
+                    </p>
+                  </div>
+
+                  <div class="space-y-3 pt-3 border-t border-zinc-800/80">
+                    <div class="flex flex-wrap gap-1.5">
+                      {has247 && (
+                        <span class="rounded bg-red-950/80 border border-red-500/30 text-[10px] font-bold text-red-400 px-1.5 py-0.5">
+                          24/7 Units
+                        </span>
+                      )}
+                      {hasBdouble && (
+                        <span class="rounded bg-zinc-800 text-[10px] text-slate-300 px-1.5 py-0.5 border border-zinc-700">
+                          B-Double Yard
+                        </span>
+                      )}
+                      {hasRwc && (
+                        <span class="rounded bg-emerald-950/80 border border-emerald-500/30 text-[10px] text-emerald-400 px-1.5 py-0.5">
+                          RWC Licensed
+                        </span>
+                      )}
+                    </div>
+                    <div class="text-xs font-semibold text-amber-500 flex items-center justify-between">
+                      <span>{sub.businesses.length} Verified Operators</span>
+                      <span>View Hub &rarr;</span>
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </section>
+  </div>
+
+  <!-- PWA & Offline Listener Script -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch((err) => {
+          console.warn('SW registration skipped:', err);
         });
+      });
+    }
+
+    const offlineBanner = document.getElementById('offline-banner');
+    const updateOnlineStatus = () => {
+      if (!offlineBanner) return;
+      if (!navigator.onLine) {
+        offlineBanner.classList.remove('hidden');
+      } else {
+        offlineBanner.classList.add('hidden');
       }
+    };
 
-      const offlineBanner = document.getElementById('offline-banner');
-      const updateOnlineStatus = () => {
-        if (!offlineBanner) return;
-        if (!navigator.onLine) {
-          offlineBanner.classList.remove('hidden');
-        } else {
-          offlineBanner.classList.add('hidden');
-        }
-      };
-
-      window.addEventListener('online', updateOnlineStatus);
-      window.addEventListener('offline', updateOnlineStatus);
-      updateOnlineStatus();
-    </script>
-  </body>
-</html>
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+  </script>
+</Layout>
