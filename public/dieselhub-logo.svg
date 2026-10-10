@@ -1,72 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 420" width="100%" height="100%" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" width="760" height="160" fill="none">
   <defs>
-    <!-- Sharp hazard stripe pattern -->
-    <pattern id="hazardStripe" width="28" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <rect width="14" height="20" fill="#F59E0B" />
-      <rect x="14" width="14" height="20" fill="#09090B" />
+    <pattern id="hazardStripe" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="10" height="20" fill="#F59E0B" />
+      <rect x="10" width="10" height="20" fill="#09090B" />
     </pattern>
   </defs>
 
-  <!-- Group: 24/7 Geolocation Pin -->
-  <g id="map-pin" transform="translate(18, 10)">
-    <!-- Pin outer teardrop shape -->
-    <path 
-      d="M140,20 C62.7,20 0,82.7 0,160 C0,250 140,360 140,360 C140,360 280,250 280,160 C280,82.7 217.3,20 140,20 Z" 
-      fill="#F59E0B"
-    />
-    <!-- Pin inner dark cutout circle -->
-    <circle cx="140" cy="160" r="82" fill="#09090B" />
-    <!-- "24/7" badge text -->
-    <text 
-      x="140" 
-      y="178" 
-      fill="#F59E0B" 
-      font-family="'Impact', 'Arial Black', sans-serif" 
-      font-size="62" 
-      font-weight="900" 
-      text-anchor="middle" 
-      letter-spacing="1"
-    >24/7</text>
+  <!-- 24/7 Geolocation Marker Pin -->
+  <g transform="translate(10, 10)">
+    <!-- Pin Body -->
+    <path d="M70,5 C34.1,5 5,34.1 5,70 C5,108 70,145 70,145 C70,145 135,108 135,70 C135,34.1 105.9,5 70,5 Z" fill="#F59E0B" />
+    <!-- Pin Cutout -->
+    <circle cx="70" cy="65" r="40" fill="#09090B" />
+    <!-- 24/7 Text -->
+    <text x="70" y="74" fill="#F59E0B" font-family="-apple-system, BlinkMacSystemFont, 'Impact', 'Arial Black', sans-serif" font-size="28" font-weight="900" text-anchor="middle" letter-spacing="0.5">24/7</text>
   </g>
 
-  <!-- Group: Wordmark -->
-  <!-- Top line: DIESEL in high-vis steel white -->
-  <text 
-    x="320" 
-    y="145" 
-    fill="#E2E8F0" 
-    font-family="'Impact', 'Arial Black', sans-serif" 
-    font-size="142" 
-    letter-spacing="5"
-  >DIESEL</text>
+  <!-- Wordmark Group -->
+  <g transform="translate(170, 0)">
+    <!-- Top Word: DIESEL -->
+    <text x="0" y="65" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, 'Arial Black', 'Impact', sans-serif" font-size="62" font-weight="900" letter-spacing="4">DIESEL</text>
+    
+    <!-- Top Word: HUB -->
+    <text x="280" y="65" fill="#F59E0B" font-family="-apple-system, BlinkMacSystemFont, 'Arial Black', 'Impact', sans-serif" font-size="62" font-weight="900" letter-spacing="4">HUB</text>
 
-  <!-- Bottom line: HUB in heavy amber -->
-  <text 
-    x="320" 
-    y="300" 
-    fill="#F59E0B" 
-    font-family="'Impact', 'Arial Black', sans-serif" 
-    font-size="182" 
-    font-weight="900" 
-    letter-spacing="2"
-  >HUB</text>
+    <!-- Hazard Divider Line -->
+    <g transform="translate(0, 84)">
+      <rect x="0" y="0" width="560" height="12" fill="url(#hazardStripe)" rx="2" />
+      <rect x="0" y="0" width="560" height="2" fill="#F59E0B" />
+      <rect x="0" y="10" width="560" height="2" fill="#F59E0B" />
+    </g>
 
-  <!-- Accent Divider: Industrial Hazard Stripe Bar -->
-  <g id="hazard-bar" transform="translate(18, 325)">
-    <rect x="0" y="0" width="964" height="18" fill="url(#hazardStripe)" />
-    <!-- Bounding accent rules -->
-    <rect x="0" y="0" width="964" height="2" fill="#F59E0B" />
-    <rect x="0" y="16" width="964" height="2" fill="#F59E0B" />
+    <!-- Subtitle: LINEHAUL BREAKDOWN DIRECTORY -->
+    <text x="2" y="124" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, 'Arial Black', 'Trebuchet MS', sans-serif" font-size="20" font-weight="800" letter-spacing="6">LINEHAUL BREAKDOWN DIRECTORY</text>
   </g>
-
-  <!-- Subtitle: BREAKDOWN DIRECTORY -->
-  <text 
-    x="18" 
-    y="390" 
-    fill="#94A3B8" 
-    font-family="'Impact', 'Arial Black', 'Trebuchet MS', sans-serif" 
-    font-size="44" 
-    font-weight="900" 
-    letter-spacing="14"
-  >BREAKDOWN DIRECTORY</text>
 </svg>
