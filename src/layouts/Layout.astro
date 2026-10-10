@@ -1,9 +1,5 @@
 ---
-<<<<<<< HEAD
-import Layout from '../layouts/Layout.astro';
-=======
 import '../styles/global.css';
->>>>>>> 1199a734fb380952c736cf33e4887a13a7bfb982
 
 interface Props {
 	title?: string;
@@ -24,20 +20,16 @@ const {
 		<title>{title}</title>
 		<meta name="description" content={description} />
 
-		<!-- Favicons & App Icons -->
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 
-		<!-- Browser Chrome Styling -->
 		<meta name="theme-color" content="#09090B" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	</head>
 	<body class="min-h-screen flex flex-col bg-zinc-950 font-sans selection:bg-amber-500 selection:text-zinc-950">
-		<!-- Sticky Top Navigation -->
 		<header class="sticky top-0 z-50 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-				<!-- Brandmark Logo -->
 				<a href="/" class="flex items-center group py-1" aria-label="DieselHub Home">
 					<img
 						src="/dieselhub-logo.svg"
@@ -49,7 +41,6 @@ const {
 					/>
 				</a>
 
-				<!-- Quick Corridor Status & Action -->
 				<div class="flex items-center gap-3">
 					<div class="hidden lg:flex items-center gap-2 text-xs font-mono text-slate-400 bg-zinc-900/90 px-3 py-1.5 rounded border border-zinc-800">
 						<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -65,16 +56,13 @@ const {
 				</div>
 			</div>
 
-			<!-- Industrial Hazard Accent Line -->
 			<div class="h-1 w-full bg-hazard-stripes opacity-90"></div>
 		</header>
 
-		<!-- Main Content Area -->
 		<main class="flex-1">
 			<slot />
 		</main>
 
-		<!-- Footer -->
 		<footer class="bg-zinc-900 border-t border-zinc-800 mt-20">
 			<div class="h-1 w-full bg-hazard-stripes opacity-40"></div>
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
