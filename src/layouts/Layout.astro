@@ -20,41 +20,39 @@ const {
 		<title>{title}</title>
 		<meta name="description" content={description} />
 
-		<!-- Favicons & App Icons -->
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 
-		<!-- Browser Chrome & Status Bar Styling -->
 		<meta name="theme-color" content="#09090B" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	</head>
 	<body class="min-h-screen flex flex-col bg-zinc-950 font-sans selection:bg-amber-500 selection:text-zinc-950">
 		<!-- Sticky Top Navigation -->
 		<header class="sticky top-0 z-50 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
-			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-				<!-- Master Brandmark -->
-<a href="/" class="flex items-center group py-2" aria-label="DieselHub Home">
-  <img
-    src="/dieselhub-logo.svg"
-    alt="DieselHub"
-    width="760"
-    height="160"
-    class="h-11 sm:h-12 w-auto aspect-[760/160] object-contain transition-transform group-hover:scale-[1.02]"
-    loading="eager"
-  />
-</a>
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+				<!-- Master Brandmark (Properly proportioned) -->
+				<a href="/" class="flex items-center group py-1" aria-label="DieselHub Home">
+					<img
+						src="/dieselhub-logo.svg"
+						alt="DieselHub"
+						width="760"
+						height="160"
+						class="h-11 sm:h-13 md:h-14 w-auto aspect-[760/160] object-contain transition-transform group-hover:scale-[1.02]"
+						loading="eager"
+					/>
+				</a>
 
-				<!-- Quick Corridor Status & Emergency Action -->
+				<!-- Quick Status & Action -->
 				<div class="flex items-center gap-3">
-					<div class="hidden md:flex items-center gap-2 text-xs font-mono text-slate-400 bg-zinc-900 px-3 py-1.5 rounded border border-zinc-800">
+					<div class="hidden lg:flex items-center gap-2 text-xs font-mono text-slate-400 bg-zinc-900/90 px-3 py-1.5 rounded border border-zinc-800">
 						<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
 						<span>CORRIDOR DISPATCH ACTIVE</span>
 					</div>
 
 					<a
-						href="tel:1800000000"
-						class="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-black text-xs uppercase tracking-wider px-4 py-2.5 rounded shadow-lg shadow-amber-500/10 transition-colors"
+						href="#emergency-finder"
+						class="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-black text-xs uppercase tracking-wider px-3.5 sm:px-4 py-2.5 rounded shadow-lg shadow-amber-500/10 transition-colors"
 					>
 						<span>Emergency Dispatch</span>
 					</a>
@@ -77,7 +75,7 @@ const {
 				<p class="text-xs text-slate-400 font-mono">
 					&copy; {new Date().getFullYear()} DieselHub. Heavy Vehicle &amp; Linehaul Breakdown Directory.
 				</p>
-				<div class="flex gap-2 text-[11px] font-mono text-slate-400">
+				<div class="flex flex-wrap gap-2 text-[11px] font-mono text-slate-400">
 					<span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800">26m B-Double</span>
 					<span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800">36m Road Train</span>
 					<span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-amber-500/90">NHVR Verified</span>
