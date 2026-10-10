@@ -11,20 +11,6 @@ const {
 	description = "24/7 heavy vehicle breakdown directory and NHVR combination access staging across Australian freight corridors.",
 } = Astro.props;
 ---
-<!-- Brandmark Logo -->
-<a href="/" class="flex items-center gap-3 group py-1" aria-label="DieselHub Home">
-	<div class="h-10 w-10 rounded-lg bg-amber-500 flex items-center justify-center font-mono font-black text-zinc-950 text-xl tracking-tighter shadow-md shadow-amber-500/20 group-hover:bg-amber-400 transition-colors">
-		DH
-	</div>
-	<div class="flex flex-col">
-		<span class="font-mono font-black text-xl tracking-tight text-slate-100 group-hover:text-amber-400 transition-colors">
-			DIESEL<span class="text-amber-500">HUB</span>
-		</span>
-		<span class="text-[9px] font-mono tracking-widest text-slate-400 uppercase -mt-1">
-			Heavy Transport Index
-		</span>
-	</div>
-</a>
 
 <!doctype html>
 <html lang="en" class="dark scroll-smooth bg-zinc-950 text-slate-100 antialiased">
@@ -42,17 +28,22 @@ const {
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	</head>
 	<body class="min-h-screen flex flex-col bg-zinc-950 font-sans selection:bg-amber-500 selection:text-zinc-950">
+		<!-- Sticky Top Navigation -->
 		<header class="sticky top-0 z-50 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-				<a href="/" class="flex items-center group py-1" aria-label="DieselHub Home">
-					<img
-						src="/dieselhub-logo.svg"
-						alt="DieselHub"
-						width="760"
-						height="160"
-						class="h-11 sm:h-13 md:h-14 w-auto aspect-[760/160] object-contain transition-transform group-hover:scale-[1.02]"
-						loading="eager"
-					/>
+				<!-- Brandmark Logo -->
+				<a href="/" class="flex items-center gap-3 group py-1" aria-label="DieselHub Home">
+					<div class="h-10 w-10 rounded-lg bg-amber-500 flex items-center justify-center font-mono font-black text-zinc-950 text-xl tracking-tighter shadow-md shadow-amber-500/20 group-hover:bg-amber-400 transition-colors">
+						DH
+					</div>
+					<div class="flex flex-col">
+						<span class="font-mono font-black text-xl tracking-tight text-slate-100 group-hover:text-amber-400 transition-colors">
+							DIESEL<span class="text-amber-500">HUB</span>
+						</span>
+						<span class="text-[9px] font-mono tracking-widest text-slate-400 uppercase -mt-1">
+							Heavy Transport Index
+						</span>
+					</div>
 				</a>
 
 				<div class="flex items-center gap-3">
@@ -73,10 +64,12 @@ const {
 			<div class="h-1 w-full bg-hazard-stripes opacity-90"></div>
 		</header>
 
+		<!-- Main Content Area -->
 		<main class="flex-1">
 			<slot />
 		</main>
 
+		<!-- Footer -->
 		<footer class="bg-zinc-900 border-t border-zinc-800 mt-20">
 			<div class="h-1 w-full bg-hazard-stripes opacity-40"></div>
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
