@@ -2,41 +2,39 @@
 import Layout from '../layouts/Layout.astro';
 import suburbs from '../data/suburbs.json';
 
+// Calculate statewide totals
 const totalSuburbs = suburbs.length;
+const allBusinesses = suburbs.flatMap((s: any) => 
+  (s.businesses || []).map((b: any) => ({
+    ...b,
+    suburbName: s.suburb,
+    state: s.state,
+    postcode: s.postcode,
+    corridor: s.corridor,
+  }))
+);
+const totalMechanics = allBusinesses.length;
 
-// Derive total verified repairers directly from the suburb dataset
-const totalMechanics = suburbs.reduce((acc: number, s: any) => {
-  return acc + (s.mechanicCount || s.operatorsCount || (s.mechanics ? s.mechanics.length : 3));
-}, 0);
+// Filter helpers
+const metroSuburbs = suburbs.filter((s: any) => 
+  ['truganina', 'laverton-north', 'campbellfield', 'dandenong-south', 'bayswater'].includes(s.suburb.toLowerCase().replace(/\s+/g, '-'))
+);
 
-// Unified Metro Hubs
-const metroSlugs = ['truganina', 'laverton-north', 'campbellfield', 'dandenong-south', 'bayswater'];
-const metroSuburbs = suburbs.filter((s: any) => metroSlugs.includes(s.slug));
+const westernSuburbs = suburbs.filter((s: any) => 
+  ['ballarat', 'horsham', 'nhill', 'bordertown', 'keith', 'tailem-bend', 'wingfield'].includes(s.suburb.toLowerCase().replace(/\s+/g, '-'))
+);
 
-// Regional & Interstate Highway Chains
-const regionalChains = [
-  {
-    id: "western-corridor",
-    title: "Western Highway (M8 / A8) Melbourne–Adelaide Corridor",
-    description: "Ballarat to Adelaide freight link via Horsham, Nhill, and SA staging checkpoints.",
-    slugs: ['ballarat', 'horsham', 'nhill', 'bordertown', 'keith', 'tailem-bend', 'wingfield']
-  },
-  {
-    id: "hume-corridor",
-    title: "Sydney–Melbourne Hume Trans-Border Corridor (M31)",
-    description: "High-volume linehaul route from Seymour across the Murray River through to Prestons.",
-    slugs: ['seymour', 'wodonga', 'albury', 'holbrook', 'gundagai', 'yass', 'goulburn', 'prestons']
-  }
-];
+const humeSuburbs = suburbs.filter((s: any) => 
+  ['seymour', 'wodonga', 'albury', 'holbrook', 'gundagai', 'yass', 'goulburn', 'prestons'].includes(s.suburb.toLowerCase().replace(/\s+/g, '-'))
+);
 
-function getSuburbCount(suburb: any) {
-  return suburb.mechanicCount || suburb.operatorsCount || (suburb.mechanics ? suburb.mechanics.length : 3);
-}
+// Fallback to all if regional arrays are sparse
+const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5);
 ---
 
 <Layout
   title="DieselHub | Australian Heavy Transport & Linehaul Breakdown Directory"
-  description="24/7 heavy vehicle breakdown directory and NHVR combination access staging across Victoria and interstate freight corridors."
+  description="Statewide directory of verified heavy commercial diesel mechanics, fleet workshops, and 24/7 mobile emergency breakdown units across Victoria."
 >
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12">
     
@@ -51,11 +49,11 @@ function getSuburbCount(suburb: any) {
         <span class="text-amber-500">Breakdown Directory</span>
       </h1>
       <p class="text-base sm:text-lg text-slate-400 max-w-3xl leading-relaxed">
-        An open index of <strong class="text-slate-200">{totalMechanics} verified heavy vehicle repairers</strong> covering Victoria's critical transport arterials, freight hubs, and interstate highway corridors across {totalSuburbs} staging areas.
+        An open index of <strong class="text-slate-200">{totalMechanics} verified heavy vehicle repairers</strong> across {totalSuburbs} freight hubs and linehaul staging checkpoints.
       </p>
     </section>
 
-    <!-- Emergency GPS Locator -->
+    <!-- Emergency Dispatch Strip -->
     <section id="emergency-finder" class="bg-zinc-900/90 border border-zinc-800 rounded-lg p-5 sm:p-7 relative overflow-hidden shadow-2xl">
       <div class="absolute top-0 left-0 w-1.5 h-full bg-amber-500"></div>
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -65,7 +63,7 @@ function getSuburbCount(suburb: any) {
             Emergency GPS Dispatch
           </span>
           <h2 class="text-xl sm:text-2xl font-bold font-mono text-slate-100">Find Closest Mechanic to Your Current Location</h2>
-          <p class="text-sm text-slate-400">Tap below to detect your position along Victoria's freight corridors.</p>
+          <p class="text-sm text-slate-400">Surface verified mobile road-service units along Victoria's gazetted heavy vehicle network.</p>
         </div>
         <button
           id="locate-btn"
@@ -74,166 +72,290 @@ function getSuburbCount(suburb: any) {
           <span>📍</span> Locate Nearest Operator
         </button>
       </div>
-
-      <!-- Emergency Filters -->
-      <div class="mt-6 pt-5 border-t border-zinc-800 flex flex-wrap items-center gap-2 font-mono text-xs text-slate-400">
-        <span class="text-slate-500 mr-1">Emergency Filter:</span>
-        <button class="px-3 py-1 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40">All Operators ({totalMechanics})</button>
-        <button class="px-3 py-1 rounded bg-zinc-950 text-slate-400 border border-zinc-800 hover:border-zinc-700">🚨 24/7 Breakdown Only</button>
-        <button class="px-3 py-1 rounded bg-zinc-950 text-slate-400 border border-zinc-800 hover:border-zinc-700">⚖️ B-Double &amp; Road Train</button>
-        <button class="px-3 py-1 rounded bg-zinc-950 text-slate-400 border border-zinc-800 hover:border-zinc-700">📋 VicRoads RWC Testers</button>
-      </div>
       <div id="location-result" class="mt-4 hidden"></div>
     </section>
 
-    <!-- Fast Highway Route Corridors -->
+    <!-- Fast Corridor Navigation Jump Bar -->
     <section class="space-y-3">
       <div class="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-        <span class="text-amber-500">🛣️</span> Fast Highway Route Corridors
+        <span class="text-amber-500">🛣️</span> Quick Jump to Corridor
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <a href="#hume-corridor" class="group block p-3.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 hover:bg-zinc-850 transition-all border-l-4 border-l-amber-500">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <a href="#metro-corridor" class="p-3.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all border-l-4 border-l-amber-500 group">
           <div class="text-xs font-mono font-bold text-amber-500 group-hover:text-amber-400 flex items-center justify-between">
-            <span>Hume Freeway (M31)</span>
-            <span>&rarr;</span>
+            <span>Melbourne Metropolitan Belt</span>
+            <span>&darr;</span>
           </div>
-          <div class="text-xs text-slate-400 mt-1 truncate">Campbellfield, Seymour, Wodonga</div>
+          <div class="text-xs text-slate-400 mt-1">Truganina, Laverton, Campbellfield, Dandenong</div>
         </a>
 
-        <a href="#western-corridor" class="group block p-3.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 hover:bg-zinc-850 transition-all border-l-4 border-l-amber-500">
+        <a href="#western-corridor" class="p-3.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all border-l-4 border-l-amber-500 group">
           <div class="text-xs font-mono font-bold text-amber-500 group-hover:text-amber-400 flex items-center justify-between">
             <span>Western Highway (M8 / A8)</span>
-            <span>&rarr;</span>
+            <span>&darr;</span>
           </div>
-          <div class="text-xs text-slate-400 mt-1 truncate">Ballarat, Horsham, SA Border</div>
+          <div class="text-xs text-slate-400 mt-1">Ballarat, Horsham, Nhill, SA Staging</div>
         </a>
 
-        <a href="#metro-hubs" class="group block p-3.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 hover:bg-zinc-850 transition-all border-l-4 border-l-amber-500">
+        <a href="#hume-corridor" class="p-3.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all border-l-4 border-l-amber-500 group">
           <div class="text-xs font-mono font-bold text-amber-500 group-hover:text-amber-400 flex items-center justify-between">
-            <span>Princes Freeway (M1)</span>
-            <span>&rarr;</span>
+            <span>Hume Corridor (M31)</span>
+            <span>&darr;</span>
           </div>
-          <div class="text-xs text-slate-400 mt-1 truncate">Truganina, Laverton North</div>
-        </a>
-
-        <a href="#metro-hubs" class="group block p-3.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 hover:bg-zinc-850 transition-all border-l-4 border-l-amber-500">
-          <div class="text-xs font-mono font-bold text-amber-500 group-hover:text-amber-400 flex items-center justify-between">
-            <span>EastLink &amp; Monash (M3 / M1)</span>
-            <span>&rarr;</span>
-          </div>
-          <div class="text-xs text-slate-400 mt-1 truncate">Dandenong South, Bayswater</div>
+          <div class="text-xs text-slate-400 mt-1">Seymour, Wodonga, Albury, Gundagai</div>
         </a>
       </div>
     </section>
 
-    <!-- Consolidated Melbourne Metropolitan Hubs Grid -->
-    <section id="metro-hubs" class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-6 sm:p-8 space-y-6">
+    <!-- SECTION 1: Melbourne Metro Hubs & Workshops -->
+    <section id="metro-corridor" class="space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-4">
         <div>
-          <span class="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold">Key Logistics Terminal Network</span>
-          <h2 class="text-xl sm:text-2xl font-bold font-mono text-slate-100 mt-1">Melbourne Metropolitan Freight Hubs</h2>
+          <span class="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold">Port of Melbourne &amp; Industrial Orbital</span>
+          <h2 class="text-2xl font-bold font-mono text-slate-100 mt-1">Melbourne Metropolitan Freight Hubs</h2>
         </div>
-        <span class="text-xs font-mono text-slate-400 self-start sm:self-auto bg-zinc-950 px-3 py-1 rounded border border-zinc-800">
-          Port of Melbourne &amp; Orbital Belt
+        <span class="text-xs font-mono text-slate-400 bg-zinc-900 px-3 py-1 rounded border border-zinc-800">
+          Heavy Transport Terminals
         </span>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {metroSuburbs.map((suburb: any) => {
-          const count = getSuburbCount(suburb);
-          return (
-            <a
-              href={`/suburbs/${suburb.slug}`}
-              class="group block p-5 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 hover:bg-zinc-900 transition-all flex flex-col justify-between"
-            >
-              <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <h3 class="text-lg font-bold font-mono text-slate-100 group-hover:text-amber-400 transition-colors">
-                    {suburb.name}
-                  </h3>
-                  <span class="text-xs font-mono text-slate-500 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
-                    {suburb.postcode}
-                  </span>
-                </div>
-                <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">
-                  {suburb.description}
-                </p>
+      <div class="space-y-8">
+        {displayMetro.map((suburbItem: any) => (
+          <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800/60 pb-3">
+              <div>
+                <a 
+                  href={`/${suburbItem.state.toLowerCase()}/${suburbItem.suburb.toLowerCase().replace(/\s+/g, '-')}`}
+                  class="text-xl font-bold font-mono text-amber-500 hover:text-amber-400 transition-colors inline-flex items-center gap-2"
+                >
+                  <span>{suburbItem.suburb}</span>
+                  <span class="text-xs text-slate-400 font-normal">({suburbItem.state} {suburbItem.postcode})</span>
+                  <span class="text-xs text-slate-500">&rarr;</span>
+                </a>
+                {suburbItem.corridor && (
+                  <p class="text-xs text-slate-400 font-mono mt-0.5">{suburbItem.corridor}</p>
+                )}
               </div>
+              <span class="text-xs font-mono text-slate-400 bg-zinc-950 px-2.5 py-1 rounded border border-zinc-800">
+                {(suburbItem.businesses || []).length} Verified Repairers
+              </span>
+            </div>
 
-              <div class="mt-5 pt-3 border-t border-zinc-900 flex items-center justify-between text-xs font-mono">
-                <div class="flex flex-wrap gap-1.5">
-                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-slate-300">24/7 Units</span>
-                  {suburb.bDoubleAccess && (
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-slate-300">B-Double Yard</span>
-                  )}
+            <!-- Business Listing Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(suburbItem.businesses || []).map((biz: any) => (
+                <div class="p-5 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-4">
+                  <div class="space-y-2.5">
+                    <div class="flex items-start justify-between gap-2">
+                      <h3 class="font-bold font-mono text-slate-100 text-base leading-snug">
+                        {biz.name}
+                      </h3>
+                      {biz.rating && (
+                        <div class="flex items-center gap-1 text-xs font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 whitespace-nowrap">
+                          <span>★</span>
+                          <span>{biz.rating}</span>
+                          {biz.reviewCount && <span class="text-slate-500 text-[10px]">({biz.reviewCount})</span>}
+                        </div>
+                      )}
+                    </div>
+
+                    <p class="text-xs text-slate-400 font-mono flex items-center gap-1.5">
+                      <span class="text-slate-500">📍</span>
+                      <span class="truncate">{biz.address}</span>
+                    </p>
+
+                    {biz.editorialSummary && (
+                      <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                        {biz.editorialSummary}
+                      </p>
+                    )}
+
+                    <!-- Access & Spec Badges -->
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                      {biz.access?.bDouble26m && (
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-emerald-400">
+                          26m B-Double
+                        </span>
+                      )}
+                      {biz.access?.roadTrain36m && (
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-amber-400">
+                          36m Road Train
+                        </span>
+                      )}
+                      {biz.access?.driveThroughBays && (
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-slate-300">
+                          Drive-Through Bays
+                        </span>
+                      )}
+                      {(biz.tags || []).slice(0, 2).map((tag: string) => (
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-slate-400">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <!-- Direct Call Action -->
+                  <div class="pt-3 border-t border-zinc-900 flex items-center justify-between gap-2">
+                    <a
+                      href={`tel:${biz.phone.replace(/[^0-9+]/g, '')}`}
+                      class="flex-1 inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-xs py-2 px-3 rounded transition-colors"
+                    >
+                      <span>📞</span> {biz.phone}
+                    </a>
+                    {biz.website && (
+                      <a
+                        href={biz.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="p-2 rounded bg-zinc-900 border border-zinc-800 text-slate-400 hover:text-slate-200 hover:border-zinc-700 transition-colors text-xs font-mono"
+                        aria-label="Visit Website"
+                      >
+                        ↗
+                      </a>
+                    )}
+                  </div>
                 </div>
-                <span class="text-amber-500 group-hover:text-amber-400 flex items-center gap-1">
-                  {count} Verified &rarr;
-                </span>
-              </div>
-            </a>
-          );
-        })}
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </section>
 
-    <!-- Regional & Interstate Highway Chains -->
-    {regionalChains.map((chain) => {
-      const chainSuburbs = suburbs.filter((s: any) => chain.slugs.includes(s.slug));
-
-      return (
-        <section id={chain.id} class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-6 sm:p-8 space-y-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-4">
-            <div>
-              <span class="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold">Interstate Route Relay</span>
-              <h2 class="text-xl sm:text-2xl font-bold font-mono text-slate-100 mt-1">{chain.title}</h2>
-              <p class="text-xs text-slate-400 mt-1">{chain.description}</p>
-            </div>
-            <span class="text-xs font-mono text-slate-400 self-start sm:self-auto bg-zinc-950 px-3 py-1 rounded border border-zinc-800">
-              {chainSuburbs.length} Staging Hubs
-            </span>
+    <!-- SECTION 2: Western Highway / SA Corridor -->
+    {westernSuburbs.length > 0 && (
+      <section id="western-corridor" class="space-y-6 pt-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-4">
+          <div>
+            <span class="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold">Interstate Route Relay</span>
+            <h2 class="text-2xl font-bold font-mono text-slate-100 mt-1">Western Highway (M8 / A8) Corridor</h2>
           </div>
+          <span class="text-xs font-mono text-slate-400 bg-zinc-900 px-3 py-1 rounded border border-zinc-800">
+            Melbourne–Adelaide Linehaul
+          </span>
+        </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {chainSuburbs.map((suburb: any) => {
-              const count = getSuburbCount(suburb);
-              return (
-                <a
-                  href={`/suburbs/${suburb.slug}`}
-                  class="group block p-5 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 hover:bg-zinc-900 transition-all flex flex-col justify-between"
+        <div class="space-y-8">
+          {westernSuburbs.map((suburbItem: any) => (
+            <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 space-y-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800/60 pb-3">
+                <a 
+                  href={`/${suburbItem.state.toLowerCase()}/${suburbItem.suburb.toLowerCase().replace(/\s+/g, '-')}`}
+                  class="text-xl font-bold font-mono text-amber-500 hover:text-amber-400 transition-colors inline-flex items-center gap-2"
                 >
-                  <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                      <h3 class="text-lg font-bold font-mono text-slate-100 group-hover:text-amber-400 transition-colors">
-                        {suburb.name}
-                      </h3>
-                      <span class="text-xs font-mono text-slate-500 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
-                        {suburb.postcode}
-                      </span>
-                    </div>
-                    <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">
-                      {suburb.description}
-                    </p>
-                  </div>
+                  <span>{suburbItem.suburb}</span>
+                  <span class="text-xs text-slate-400 font-normal">({suburbItem.state} {suburbItem.postcode})</span>
+                  <span class="text-xs text-slate-500">&rarr;</span>
+                </a>
+                <span class="text-xs font-mono text-slate-400 bg-zinc-950 px-2.5 py-1 rounded border border-zinc-800">
+                  {(suburbItem.businesses || []).length} Verified Repairers
+                </span>
+              </div>
 
-                  <div class="mt-5 pt-3 border-t border-zinc-900 flex items-center justify-between text-xs font-mono">
-                    <div class="flex flex-wrap gap-1.5">
-                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-slate-300">24/7 Units</span>
-                      {suburb.bDoubleAccess && (
-                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-slate-300">B-Double Yard</span>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(suburbItem.businesses || []).map((biz: any) => (
+                  <div class="p-5 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-4">
+                    <div class="space-y-2.5">
+                      <div class="flex items-start justify-between gap-2">
+                        <h3 class="font-bold font-mono text-slate-100 text-base leading-snug">{biz.name}</h3>
+                        {biz.rating && (
+                          <div class="flex items-center gap-1 text-xs font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 whitespace-nowrap">
+                            <span>★</span> {biz.rating}
+                          </div>
+                        )}
+                      </div>
+                      <p class="text-xs text-slate-400 font-mono flex items-center gap-1.5">
+                        <span class="text-slate-500">📍</span>
+                        <span class="truncate">{biz.address}</span>
+                      </p>
+                      {biz.editorialSummary && (
+                        <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">{biz.editorialSummary}</p>
                       )}
                     </div>
-                    <span class="text-amber-500 group-hover:text-amber-400 flex items-center gap-1">
-                      {count} Verified &rarr;
-                    </span>
+                    <div class="pt-3 border-t border-zinc-900 flex items-center justify-between gap-2">
+                      <a
+                        href={`tel:${biz.phone.replace(/[^0-9+]/g, '')}`}
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-xs py-2 px-3 rounded transition-colors"
+                      >
+                        <span>📞</span> {biz.phone}
+                      </a>
+                    </div>
                   </div>
-                </a>
-              );
-            })}
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- SECTION 3: Hume Corridor -->
+    {humeSuburbs.length > 0 && (
+      <section id="hume-corridor" class="space-y-6 pt-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-4">
+          <div>
+            <span class="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold">Interstate Route Relay</span>
+            <h2 class="text-2xl font-bold font-mono text-slate-100 mt-1">Sydney–Melbourne Hume Corridor (M31)</h2>
           </div>
-        </section>
-      );
-    })}
+          <span class="text-xs font-mono text-slate-400 bg-zinc-900 px-3 py-1 rounded border border-zinc-800">
+            High-Volume Linehaul Belt
+          </span>
+        </div>
+
+        <div class="space-y-8">
+          {humeSuburbs.map((suburbItem: any) => (
+            <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 space-y-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800/60 pb-3">
+                <a 
+                  href={`/${suburbItem.state.toLowerCase()}/${suburbItem.suburb.toLowerCase().replace(/\s+/g, '-')}`}
+                  class="text-xl font-bold font-mono text-amber-500 hover:text-amber-400 transition-colors inline-flex items-center gap-2"
+                >
+                  <span>{suburbItem.suburb}</span>
+                  <span class="text-xs text-slate-400 font-normal">({suburbItem.state} {suburbItem.postcode})</span>
+                  <span class="text-xs text-slate-500">&rarr;</span>
+                </a>
+                <span class="text-xs font-mono text-slate-400 bg-zinc-950 px-2.5 py-1 rounded border border-zinc-800">
+                  {(suburbItem.businesses || []).length} Verified Repairers
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(suburbItem.businesses || []).map((biz: any) => (
+                  <div class="p-5 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-4">
+                    <div class="space-y-2.5">
+                      <div class="flex items-start justify-between gap-2">
+                        <h3 class="font-bold font-mono text-slate-100 text-base leading-snug">{biz.name}</h3>
+                        {biz.rating && (
+                          <div class="flex items-center gap-1 text-xs font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 whitespace-nowrap">
+                            <span>★</span> {biz.rating}
+                          </div>
+                        )}
+                      </div>
+                      <p class="text-xs text-slate-400 font-mono flex items-center gap-1.5">
+                        <span class="text-slate-500">📍</span>
+                        <span class="truncate">{biz.address}</span>
+                      </p>
+                      {biz.editorialSummary && (
+                        <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">{biz.editorialSummary}</p>
+                      )}
+                    </div>
+                    <div class="pt-3 border-t border-zinc-900 flex items-center justify-between gap-2">
+                      <a
+                        href={`tel:${biz.phone.replace(/[^0-9+]/g, '')}`}
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-xs py-2 px-3 rounded transition-colors"
+                      >
+                        <span>📞</span> {biz.phone}
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
 
   </div>
 </Layout>
@@ -257,8 +379,8 @@ function getSuburbCount(suburb: any) {
           resultDiv.classList.remove('hidden');
           resultDiv.innerHTML = `
             <div class="p-4 rounded bg-zinc-950 border border-amber-500/40 text-xs font-mono text-slate-300 flex items-center justify-between">
-              <span>📍 Coordinates: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}</span>
-              <span class="text-amber-400 font-bold">Closest Hubs: Laverton North & Truganina (Port Western Belt)</span>
+              <span>📍 GPS Locked: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}</span>
+              <span class="text-amber-400 font-bold">Nearest Hub: Truganina / Laverton North</span>
             </div>
           `;
         }
@@ -266,7 +388,7 @@ function getSuburbCount(suburb: any) {
       },
       () => {
         locateBtn.textContent = '📍 Locate Nearest Operator';
-        alert('Could not retrieve location. Please allow GPS permissions or choose your corridor below.');
+        alert('Could not retrieve location. Please select your corridor above.');
       }
     );
   });
