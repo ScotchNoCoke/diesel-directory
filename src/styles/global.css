@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+@config "../../tailwind.config.mjs";
+
+@layer base {
+  html, body {
+    background-color: #09090b;
+    color: #f1f5f9;
+  }
+}
