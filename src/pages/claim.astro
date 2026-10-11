@@ -216,7 +216,7 @@ import Layout from '../layouts/Layout.astro';
         body: JSON.stringify(payload)
       });
 
-      const result = await res.json();
+      const text = await res.text(); let result: any = {}; try { result = JSON.parse(text); } catch { throw new Error(`Server returned HTTP ${res.status}: ${text.slice(0, 80)}`); }
 
       if (!res.ok) {
         throw new Error(result.error || 'Failed to submit claim.');

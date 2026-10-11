@@ -1,3 +1,5 @@
+export const prerender = false;
+
 import type { APIRoute } from 'astro';
 import { isDomainEmailMatch } from '../../lib/verifyDomain';
 
@@ -18,7 +20,6 @@ export const POST: APIRoute = async ({ request }) => {
       notes
     } = data;
 
-    // 1. Basic server-side guard
     if (!businessName || !phone || !email) {
       return new Response(
         JSON.stringify({ error: 'Missing required business, phone, or email fields.' }),
@@ -26,12 +27,9 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // 2. Perform Domain Email Matching
-    // Fall back to listing website if passed, or query your listing store
     const listingWebsiteUrl = website || '';
     const isVerifiedDomain = isDomainEmailMatch(email, listingWebsiteUrl);
 
-    // 3. Routing decision
     const claimRecord = {
       businessName,
       suburb,
@@ -50,7 +48,6 @@ export const POST: APIRoute = async ({ request }) => {
     };
 
     if (isVerifiedDomain) {
-      // In production: dispatch one-time magic link / token to email
       return new Response(
         JSON.stringify({
           success: true,
@@ -62,7 +59,6 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // If webmail (@gmail, etc.) or no domain match, queue for review
     return new Response(
       JSON.stringify({
         success: true,
@@ -72,9 +68,9 @@ export const POST: APIRoute = async ({ request }) => {
       }),
       { status: 202, headers: { 'Content-Type': 'application/json' } }
     );
-  } catch (err) {
+  } catch (err: any) {
     return new Response(
-      JSON.stringify({ error: 'Internal server error processing claim.' }),
+      JSON.stringify({ error: err?.message || 'Internal server error processing claim.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
