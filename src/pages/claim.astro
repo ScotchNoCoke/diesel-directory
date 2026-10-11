@@ -1,0 +1,223 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="Claim & Verify Business Listing | DieselHub"
+  description="Verify management and dispatch access for heavy vehicle repair facilities across Australian linehaul corridors."
+>
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10">
+    
+    <div class="space-y-3 border-b border-zinc-800 pb-6">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-zinc-900 border border-zinc-800 text-xs font-mono text-amber-500 uppercase tracking-widest">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        Workshop Operator Verification
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-black font-mono tracking-tight text-slate-100">
+        Claim Your <span class="text-amber-500">Workshop Listing</span>
+      </h1>
+      <p class="text-sm text-slate-400 font-sans leading-relaxed">
+        Verify your facility's NHVR combination access clearance (26m B-Double, 36m Road Train) and mobile 24/7 callout credentials to receive the <strong class="text-slate-200">Verified by Operator</strong> badge on the statewide freight corridor network.
+      </p>
+    </div>
+
+    <form id="claim-form" class="space-y-6 font-mono text-xs">
+      
+      <div class="bg-zinc-900/60 border border-zinc-800 p-5 rounded-lg space-y-4">
+        <span class="text-xs text-amber-500 font-bold uppercase tracking-wider block">1. Business to Claim</span>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label for="businessName" class="text-slate-300 block">Trading Name / Listing Name *</label>
+            <input
+              type="text"
+              id="businessName"
+              name="businessName"
+              required
+              placeholder="e.g. Daimler Trucks Laverton"
+              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
+            />
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="suburb" class="text-slate-300 block">Hub Suburb / Depot Location *</label>
+            <input
+              type="text"
+              id="suburb"
+              name="suburb"
+              required
+              placeholder="e.g. Truganina"
+              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-900/60 border border-zinc-800 p-5 rounded-lg space-y-4">
+        <span class="text-xs text-amber-500 font-bold uppercase tracking-wider block">2. Management Credentials</span>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label for="contactName" class="text-slate-300 block">Contact Full Name *</label>
+            <input
+              type="text"
+              id="contactName"
+              name="contactName"
+              required
+              placeholder="e.g. John Doe"
+              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
+            />
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="role" class="text-slate-300 block">Role / Position *</label>
+            <select
+              id="role"
+              name="role"
+              required
+              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
+            >
+              <option value="Workshop Manager">Workshop Manager / Service Foreman</option>
+              <option value="Business Owner / Director">Business Owner / Director</option>
+              <option value="Fleet Dispatch Controller">Fleet Dispatch Controller</option>
+              <option value="Other">Authorised Representative</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="email" class="text-slate-300 block">Business Email *</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              placeholder="service@yourdealership.com.au"
+              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
+            />
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="directPhone" class="text-slate-300 block">Direct Contact Number *</label>
+            <input
+              type="tel"
+              id="directPhone"
+              name="directPhone"
+              required
+              placeholder="0400 000 000"
+              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
+            />
+          </div>
+
+          <div class="space-y-1.5 sm:col-span-2">
+            <label for="abn" class="text-slate-300 block">Australian Business Number (ABN) *</label>
+            <input
+              type="text"
+              id="abn"
+              name="abn"
+              required
+              placeholder="11-digit ABN for business verification"
+              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-900/60 border border-zinc-800 p-5 rounded-lg space-y-4">
+        <span class="text-xs text-amber-500 font-bold uppercase tracking-wider block">3. Heavy Vehicle Capabilities &amp; Access</span>
+        <p class="text-[11px] text-slate-400 font-sans">Confirm physical combination access and emergency capabilities:</p>
+        
+        <div class="space-y-2 pt-1 font-sans text-xs">
+          <label class="flex items-start gap-2.5 cursor-pointer text-slate-200">
+            <input type="checkbox" name="bDouble26m" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
+            <span><strong>26m B-Double Gazetted Access:</strong> Facility has legal NHVR road access and turning clearance.</span>
+          </label>
+
+          <label class="flex items-start gap-2.5 cursor-pointer text-slate-200">
+            <input type="checkbox" name="roadTrain36m" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
+            <span><strong>36m Road Train / A-Double Access:</strong> Site accommodates multi-combination staging / uncoupling.</span>
+          </label>
+
+          <label class="flex items-start gap-2.5 cursor-pointer text-slate-200">
+            <input type="checkbox" name="driveThroughBays" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
+            <span><strong>Drive-Through Service Bays:</strong> High-clearance drive-through bays available.</span>
+          </label>
+
+          <label class="flex items-start gap-2.5 cursor-pointer text-slate-200">
+            <input type="checkbox" name="mobile247" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
+            <span><strong>24/7 Mobile Linehaul Response:</strong> Dedicated breakdown service vehicle available for roadside callouts.</span>
+          </label>
+        </div>
+
+        <div class="space-y-1.5 pt-3 border-t border-zinc-800">
+          <label for="notes" class="text-slate-300 block">Listing Updates / Corrections (Optional)</label>
+          <textarea
+            id="notes"
+            name="notes"
+            rows="3"
+            placeholder="Provide updated dispatch telephone numbers, after-hours emergency lines, or OEM diagnostic specialisations..."
+            class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="space-y-3 pt-2">
+        <button
+          type="submit"
+          id="submit-btn"
+          class="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-sm py-3.5 px-4 rounded transition-colors shadow-lg shadow-amber-500/10 cursor-pointer"
+        >
+          Submit Listing Claim for Verification
+        </button>
+        <div id="status-msg" class="hidden p-4 rounded text-xs font-mono"></div>
+      </div>
+    </form>
+  </div>
+</Layout>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const bizParam = params.get('business');
+  const subParam = params.get('suburb');
+
+  if (bizParam) {
+    const bizInput = document.getElementById('businessName') as HTMLInputElement;
+    if (bizInput) bizInput.value = bizParam;
+  }
+  if (subParam) {
+    const subInput = document.getElementById('suburb') as HTMLInputElement;
+    if (subInput) subInput.value = subParam;
+  }
+
+  const form = document.getElementById('claim-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const statusMsg = document.getElementById('status-msg') as HTMLDivElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!submitBtn || !statusMsg) return;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting Verification...';
+
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData.entries());
+
+    try {
+      const subject = encodeURIComponent(`[DieselHub Listing Claim] ${payload.businessName} (${payload.suburb})`);
+      const body = encodeURIComponent(
+        `Business: ${payload.businessName}\nSuburb: ${payload.suburb}\nContact: ${payload.contactName} (${payload.role})\nEmail: ${payload.email}\nPhone: ${payload.directPhone}\nABN: ${payload.abn}\n\nAccess:\n- 26m B-Double: ${payload.bDouble26m ? 'Yes' : 'No'}\n- 36m Road Train: ${payload.roadTrain36m ? 'Yes' : 'No'}\n- Drive-Through: ${payload.driveThroughBays ? 'Yes' : 'No'}\n- 24/7 Mobile: ${payload.mobile247 ? 'Yes' : 'No'}\n\nNotes:\n${payload.notes || 'None'}`
+      );
+
+      window.location.href = `mailto:admin@dieselhub.com.au?subject=${subject}&body=${body}`;
+
+      statusMsg.className = 'p-4 rounded text-xs font-mono bg-emerald-950/80 border border-emerald-500/60 text-emerald-300 block';
+      statusMsg.textContent = '✓ Claim package generated. Your email client has opened with your verified credentials.';
+      submitBtn.textContent = 'Listing Claim Sent';
+    } catch (err) {
+      statusMsg.className = 'p-4 rounded text-xs font-mono bg-red-950/80 border border-red-500/60 text-red-300 block';
+      statusMsg.textContent = 'An error occurred while generating verification.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Retry Submission';
+    }
+  });
+</script>

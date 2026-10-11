@@ -196,7 +196,16 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                   </div>
 
                   <!-- Direct Call Action -->
-                  <div class="pt-3 border-t border-zinc-900 flex items-center justify-between gap-2">
+                  <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-1">
+                      <span>Status: Registered</span>
+                      <a 
+                        href={`/claim?business=${encodeURIComponent(biz.name)}&suburb=${encodeURIComponent(suburbItem.suburb)}`}
+                        class="text-amber-500/80 hover:text-amber-400 transition-colors"
+                      >
+                        Claim listing &nearr;
+                      </a>
+                    </div>
+                    <div class="pt-2 border-t border-zinc-900 flex items-center justify-between gap-2">
                     <a
                       href={`tel:${biz.phone.replace(/[^0-9+]/g, '')}`}
                       class="flex-1 inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-xs py-2 px-3 rounded transition-colors"
@@ -273,7 +282,16 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                         <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">{biz.editorialSummary}</p>
                       )}
                     </div>
-                    <div class="pt-3 border-t border-zinc-900 flex items-center justify-between gap-2">
+                    <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-1">
+                      <span>Status: Registered</span>
+                      <a 
+                        href={`/claim?business=${encodeURIComponent(biz.name)}&suburb=${encodeURIComponent(suburbItem.suburb)}`}
+                        class="text-amber-500/80 hover:text-amber-400 transition-colors"
+                      >
+                        Claim listing &nearr;
+                      </a>
+                    </div>
+                    <div class="pt-2 border-t border-zinc-900 flex items-center justify-between gap-2">
                       <a
                         href={`tel:${biz.phone.replace(/[^0-9+]/g, '')}`}
                         class="flex-1 inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-xs py-2 px-3 rounded transition-colors"
@@ -340,7 +358,16 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                         <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">{biz.editorialSummary}</p>
                       )}
                     </div>
-                    <div class="pt-3 border-t border-zinc-900 flex items-center justify-between gap-2">
+                    <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-1">
+                      <span>Status: Registered</span>
+                      <a 
+                        href={`/claim?business=${encodeURIComponent(biz.name)}&suburb=${encodeURIComponent(suburbItem.suburb)}`}
+                        class="text-amber-500/80 hover:text-amber-400 transition-colors"
+                      >
+                        Claim listing &nearr;
+                      </a>
+                    </div>
+                    <div class="pt-2 border-t border-zinc-900 flex items-center justify-between gap-2">
                       <a
                         href={`tel:${biz.phone.replace(/[^0-9+]/g, '')}`}
                         class="flex-1 inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-xs py-2 px-3 rounded transition-colors"
