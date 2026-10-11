@@ -1,197 +1,64 @@
 ---
-export const prerender = true;
----
-import '../../../../styles/global.css';
-import type { GetStaticPaths } from 'astro';
-import suburbsData from '../../../../data/suburbs.json';
+import Layout from '../../../../layouts/Layout.astro';
+import directoryData from '../../../../data/directory.json';
 
-const SERVICE_CONFIGS: Record<string, {
-  titleSuffix: string;
-  h1Prefix: string;
-  filterRegex: RegExp;
-  metaDesc: string;
-  badge: string;
-}> = {
-  'mobile-truck-breakdown': {
-    titleSuffix: '24/7 Mobile Truck Breakdown & Emergency Roadside',
-    h1Prefix: '24/7 Mobile Truck Breakdown Services in',
-    filterRegex: /24\/7|breakdown|emergency|roadside|hotline|mobile/i,
-    metaDesc: 'Urgent roadside diesel mechanics, emergency prime mover breakdown call-outs, and mobile repair units in',
-    badge: '🚨 24/7 Roadside Mobile Dispatch'
-  },
-  'heavy-vehicle-roadworthy': {
-    titleSuffix: 'Heavy Vehicle Roadworthy (RWC) & Safety Inspections',
-    h1Prefix: 'Licensed Heavy Vehicle Roadworthy (RWC) Testers in',
-    filterRegex: /rwc|roadworthy|tester|compliance|safety|inspection/i,
-    metaDesc: 'Licensed heavy vehicle roadworthy inspection stations, defect clearance, and annual certificate testers in',
-    badge: '📋 Heavy Vehicle RWC & Compliance'
-  },
-  'trailer-repairs-air-brakes': {
-    titleSuffix: 'Trailer Repairs, Suspension & Air Brake Relining',
-    h1Prefix: 'Semi-Trailer Repairs & Air Brake Overhauls in',
-    filterRegex: /trailer|brake|pneumatic|suspension|chassis|air/i,
-    metaDesc: 'Semi-trailer chassis straightening, air brake pneumatic overhauls, hub bearings, and suspension repairs in',
-    badge: '🔧 Semi-Trailer & Pneumatics Specialist'
-  }
-};
-
-export const getStaticPaths: GetStaticPaths = async () => {
-  const serviceKeys = ['mobile-truck-breakdown', 'heavy-vehicle-roadworthy', 'trailer-repairs-air-brakes'];
-  const paths = [];
-
-  for (const page of suburbsData) {
-    for (const service of serviceKeys) {
-      paths.push({
-        params: {
-          state: page.state.toLowerCase(),
-          suburb: page.suburb.toLowerCase(),
-          service: service
-        },
-        props: { data: page, serviceKey: service }
+export async function getStaticPaths() {
+  const paths: any[] = [];
+  
+  directoryData.forEach((item: any) => {
+    if (item.state && item.suburb && item.services) {
+      item.services.forEach((service: string) => {
+        paths.push({
+          params: {
+            state: item.state.toLowerCase(),
+            suburb: item.suburb.toLowerCase(),
+            service: service.toLowerCase().replace(/\s+/g, '-')
+          },
+          props: {
+            serviceName: service,
+            suburbName: item.suburb,
+            stateName: item.state,
+            listings: directoryData.filter((d: any) => 
+              d.state?.toLowerCase() === item.state?.toLowerCase() &&
+              d.suburb?.toLowerCase() === item.suburb?.toLowerCase() &&
+              (d.services || []).some((s: string) => s.toLowerCase() === service.toLowerCase())
+            )
+          }
+        });
       });
     }
-  }
+  });
 
   return paths;
-};
+}
 
-const { data, serviceKey } = Astro.props;
-const config = SERVICE_CONFIGS[serviceKey];
+const { serviceName, suburbName, stateName, listings } = Astro.props;
+---
 
-const suburbName = data.suburb.replace('-', ' ');
-const suburbTitle = suburbName.charAt(0).toUpperCase() + suburbName.slice(1);
-const stateUpper = data.state.toUpperCase();
+<Layout
+  title={`${serviceName} in ${suburbName}, ${stateName?.toUpperCase()} | DieselHub`}
+  description={`Find heavy vehicle ${serviceName} providers in ${suburbName}, ${stateName?.toUpperCase()}. Verified workshop facilities and emergency mobile mechanics.`}
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 font-sans">
+    <div class="border-b border-zinc-800 pb-6">
+      <span class="text-xs font-mono text-amber-500 uppercase tracking-widest">{stateName?.toUpperCase()} · {suburbName}</span>
+      <h1 class="text-3xl font-black font-mono tracking-tight text-slate-100 mt-1">
+        {serviceName} in <span class="text-amber-500">{suburbName}</span>
+      </h1>
+    </div>
 
-const siteUrl = Astro.site ? Astro.site.toString().replace(/\/$/, '') : 'https://melbournedieselmechanics.com.au';
-const canonicalUrl = `${siteUrl}/${data.state}/${data.suburb}/${serviceKey}/`;
-
-// Filter businesses matching the service intent, fallback to all if none match strictly
-const matchingBusinesses = data.businesses.filter(b => 
-  b.tags.some(t => config.filterRegex.test(t)) || config.filterRegex.test(b.editorialSummary)
-);
-const displayBusinesses = matchingBusinesses.length > 0 ? matchingBusinesses : data.businesses;
-
-const pageTitle = `${config.h1Prefix} ${suburbTitle} ${stateUpper} | Victorian Heavy Commercial Directory`;
-const pageDescription = `${config.metaDesc} ${suburbTitle} ${stateUpper} ${data.postcode}. Serving the ${data.corridor}.`;
-
-const itemListSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'ItemList',
-  name: `${config.h1Prefix} ${suburbTitle} ${stateUpper}`,
-  description: pageDescription,
-  url: canonicalUrl,
-  numberOfItems: displayBusinesses.length,
-  itemListElement: displayBusinesses.map((biz, idx) => ({
-    '@type': 'ListItem',
-    position: idx + 1,
-    item: {
-      '@type': 'AutoRepair',
-      name: biz.name,
-      telephone: biz.phone,
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: biz.address,
-        addressLocality: suburbTitle,
-        addressRegion: stateUpper,
-        postalCode: data.postcode,
-        addressCountry: 'AU'
-      }
-    }
-  }))
-};
-
-<!doctype html>
-<html lang="en-AU" class="bg-slate-950 text-slate-100 antialiased selection:bg-amber-500 selection:text-black">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{pageTitle}</title>
-    <meta name="description" content={pageDescription} />
-    <link rel="canonical" href={canonicalUrl} />
-    <script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} />
-  </head>
-  <body class="min-h-screen pb-24 sm:pb-12">
-    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40">
-      <div class="mx-auto max-w-5xl px-4 py-3 sm:px-6 flex items-center justify-between">
-        <nav class="flex items-center space-x-2 text-xs font-medium text-slate-400" aria-label="Breadcrumb">
-          <a href="/" class="hover:text-amber-400">Home</a>
-          <span class="text-slate-600">/</span>
-          <a href={`/${data.state}/${data.suburb}/`} class="hover:text-amber-400 capitalize">{suburbName}</a>
-          <span class="text-slate-600">/</span>
-          <span class="text-white font-semibold">{serviceKey.replace(/-/g, ' ')}</span>
-        </nav>
-        <span class="text-xs text-amber-400 font-mono tracking-wide bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-          VIC {data.postcode}
-        </span>
-      </div>
-    </header>
-
-    <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <section class="mb-8">
-        <span class="inline-block rounded bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-400 border border-amber-500/20 mb-3">
-          {config.badge}
-        </span>
-        <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-          {config.h1Prefix} {suburbTitle}, VIC
-        </h1>
-        <p class="mt-3 text-base text-slate-400 leading-relaxed max-w-3xl">
-          {pageDescription} Local corridor arterials include {data.arterials.join(', ')}.
-        </p>
-      </section>
-
-      <!-- Direct Operator Listings matching intent -->
-      <section class="space-y-6">
-        {displayBusinesses.map((biz, index) => (
-          <article class="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-900/80 p-6 transition sm:flex-row sm:items-start gap-6">
-            <div class="space-y-3 flex-1">
-              <div class="flex items-center gap-2.5">
-                <span class="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500 text-xs font-bold text-black shrink-0">
-                  #{index + 1}
-                </span>
-                <h2 class="text-xl font-bold text-white">{biz.name}</h2>
-              </div>
-              <p class="text-xs text-slate-400">{biz.address}</p>
-              <p class="text-sm text-slate-300 leading-relaxed">{biz.editorialSummary}</p>
-              <div class="flex flex-wrap gap-1.5 pt-1">
-                {biz.tags.map((tag) => (
-                  <span class="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-300 border border-slate-700/60">{tag}</span>
-                ))}
-              </div>
-            </div>
-
-            <div class="flex flex-col sm:items-end justify-between self-stretch shrink-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-800">
-              <span class="text-lg font-mono font-bold text-white mb-4">{biz.phone}</span>
-              <a
-                href={`tel:${biz.phone.replace(/\s+/g, '')}`}
-                class="inline-flex items-center justify-center rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-bold text-black hover:bg-amber-400 transition"
-              >
-                📞 Call Direct
-              </a>
-            </div>
-          </article>
-        ))}
-      </section>
-
-      <!-- Internal Silo Cross-Linking -->
-      <footer class="border-t border-slate-800 pt-8 mt-12">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Other Services in {suburbTitle}</h3>
-        <div class="flex flex-wrap gap-2">
-          {Object.entries(SERVICE_CONFIGS).filter(([k]) => k !== serviceKey).map(([slug, cfg]) => (
-            <a
-              href={`/${data.state}/${data.suburb}/${slug}/`}
-              class="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-300 hover:border-amber-500/50 hover:text-white transition"
-            >
-              {cfg.titleSuffix} &rarr;
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {listings.map((item: any) => (
+        <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3">
+          <h2 class="text-lg font-bold text-slate-100">{item.name}</h2>
+          <p class="text-xs text-slate-400">{item.address || `${item.suburb}, ${item.state}`}</p>
+          {item.phone && (
+            <a href={`tel:${item.phone}`} class="inline-block text-xs font-mono font-bold text-amber-400 hover:text-amber-300">
+              📞 {item.phone}
             </a>
-          ))}
-          <a
-            href={`/${data.state}/${data.suburb}/`}
-            class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-amber-400 hover:bg-slate-700 transition"
-          >
-            All {suburbTitle} Mechanics &rarr;
-          </a>
+          )}
         </div>
-      </footer>
-    </main>
-  </body>
-</html>
+      ))}
+    </div>
+  </div>
+</Layout>
