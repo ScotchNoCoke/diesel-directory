@@ -1,11 +1,9 @@
 import { defineConfig } from 'astro/config';
-import sitemap from '@astrojs/sitemap';
-import tailwindcss from '@tailwindcss/vite';
+import cloudflare from '@astrojs/cloudflare';
+import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
-  site: 'https://melbournedieselmechanics.com.au',
-  integrations: [sitemap()],
-  vite: {
-    plugins: [tailwindcss()],
-  },
+  output: 'server',
+  adapter: cloudflare(),
+  integrations: [tailwind()]
 });

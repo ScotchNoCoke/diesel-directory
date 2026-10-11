@@ -13,11 +13,7 @@ export const POST: APIRoute = async ({ request }) => {
       phone,
       email,
       abn,
-      website,
-      afterHoursDispatch,
-      bDoubleAccess,
-      roadTrainAccess,
-      notes
+      website
     } = data;
 
     if (!businessName || !phone || !email) {
@@ -30,30 +26,11 @@ export const POST: APIRoute = async ({ request }) => {
     const listingWebsiteUrl = website || '';
     const isVerifiedDomain = isDomainEmailMatch(email, listingWebsiteUrl);
 
-    const claimRecord = {
-      businessName,
-      suburb,
-      contactName,
-      phone,
-      email,
-      abn,
-      verificationStatus: isVerifiedDomain ? 'domain_verified' : 'pending_manual_review',
-      submittedAt: new Date().toISOString(),
-      flags: {
-        afterHoursDispatch: Boolean(afterHoursDispatch),
-        bDoubleAccess: Boolean(bDoubleAccess),
-        roadTrainAccess: Boolean(roadTrainAccess)
-      },
-      notes
-    };
-
     if (isVerifiedDomain) {
       return new Response(
         JSON.stringify({
-          success: true,
           status: 'verified',
-          message: 'Official domain match confirmed. Instant verification link dispatched to your inbox.',
-          claim: claimRecord
+          message: 'Official domain match confirmed. Instant verification link dispatched to your inbox.'
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
@@ -61,10 +38,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     return new Response(
       JSON.stringify({
-        success: true,
         status: 'pending_review',
-        message: 'Claim received. Standard webmail or unmatched domain detected — queued for phone/ABN verification.',
-        claim: claimRecord
+        message: 'Claim received. Unmatched domain or personal email detected — queued for phone/ABN verification.'
       }),
       { status: 202, headers: { 'Content-Type': 'application/json' } }
     );
