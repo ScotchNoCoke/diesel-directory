@@ -1,17 +1,8 @@
-import { isDomainEmailMatch } from '../../src/lib/verifyDomain';
-
-export async function onRequestPost({ request }: { request: Request }) {
+export async function onRequestPost(context: any) {
+  const { request } = context;
   try {
-    const data: any = await request.json();
-    const {
-      businessName,
-      suburb,
-      contactName,
-      phone,
-      email,
-      abn,
-      website
-    } = data;
+    const data = await request.json();
+    const { businessName, email, phone, website } = data;
 
     if (!businessName || !phone || !email) {
       return new Response(
@@ -20,10 +11,13 @@ export async function onRequestPost({ request }: { request: Request }) {
       );
     }
 
-    const listingWebsiteUrl = website || '';
-    const isVerifiedDomain = isDomainEmailMatch(email, listingWebsiteUrl);
+    // Domain check
+    const emailDomain = email.split('@')[1]?.toLowerCase().trim() || '';
+    const websiteDomain = (website || '').replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].toLowerCase().trim();
 
-    if (isVerifiedDomain) {
+    const isMatch = websiteDomain && (emailDomain === websiteDomain || emailDomain.endsWith('.' + websiteDomain));
+
+    if (isMatch) {
       return new Response(
         JSON.stringify({
           status: 'verified',
@@ -42,7 +36,7 @@ export async function onRequestPost({ request }: { request: Request }) {
     );
   } catch (err: any) {
     return new Response(
-      JSON.stringify({ error: err?.message || 'Internal server error processing claim.' }),
+      JSON.stringify({ error: err?.message || 'Server error processing claim' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
