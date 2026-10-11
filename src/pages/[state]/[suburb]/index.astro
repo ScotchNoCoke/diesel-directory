@@ -1,266 +1,73 @@
 ---
-export const prerender = true;
----
-import '../../../styles/global.css';
-import type { GetStaticPaths } from 'astro';
-import suburbsData from '../../../data/suburbs.json';
-import ClaimListingModal from '../../../components/ClaimListingModal.astro';
-import AccessFilter from '../../../components/AccessFilter.astro';
-import TelemetryTracker from '../../../components/TelemetryTracker.astro';
+import Layout from '../../layouts/Layout.astro';
+import directoryData from '../../data/directory.json';
 
-export const getStaticPaths: GetStaticPaths = async () => {
-  return suburbsData.map((page) => ({
-    params: {
-      state: page.state.toLowerCase(),
-      suburb: page.suburb.toLowerCase(),
-    },
-    props: { data: page },
+export async function getStaticPaths() {
+  const suburbsMap = new Map();
+
+  directoryData.forEach((item: any) => {
+    if (item.state && item.suburb) {
+      const key = `${item.state.toLowerCase()}/${item.suburb.toLowerCase()}`;
+      if (!suburbsMap.has(key)) {
+        suburbsMap.set(key, {
+          state: item.state.toLowerCase(),
+          suburb: item.suburb.toLowerCase(),
+          stateName: item.state,
+          suburbName: item.suburb,
+          listings: []
+        });
+      }
+      suburbsMap.get(key).listings.push(item);
+    }
+  });
+
+  return Array.from(suburbsMap.values()).map(entry => ({
+    params: { state: entry.state, suburb: entry.suburb },
+    props: {
+      stateName: entry.stateName,
+      suburbName: entry.suburbName,
+      listings: entry.listings
+    }
   }));
-};
+}
 
-const { data } = Astro.props;
+const { stateName, suburbName, listings } = Astro.props;
+---
 
-const suburbName = data.suburb.replace('-', ' ');
-const suburbTitle = suburbName.charAt(0).toUpperCase() + suburbName.slice(1);
-const stateUpper = data.state.toUpperCase();
+<Layout
+  title={`Diesel Mechanics & Heavy Vehicle Repairers in ${suburbName}, ${stateName?.toUpperCase()} | DieselHub`}
+  description={`Find heavy vehicle workshops, mobile diesel breakdown services, and trailer repair facilities in ${suburbName}, ${stateName?.toUpperCase()}.`}
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 font-sans">
+    <div class="border-b border-zinc-800 pb-6">
+      <span class="text-xs font-mono text-amber-500 uppercase tracking-widest">{stateName?.toUpperCase()} Regional Hub</span>
+      <h1 class="text-3xl font-black font-mono tracking-tight text-slate-100 mt-1">
+        Diesel Mechanics in <span class="text-amber-500">{suburbName}</span>
+      </h1>
+      <p class="text-sm text-slate-400 mt-2">
+        Verified heavy transport workshops, emergency road service, and mobile linehaul mechanics.
+      </p>
+    </div>
 
-const siteUrl = Astro.site ? Astro.site.toString().replace(/\/$/, '') : 'https://melbournedieselmechanics.com.au';
-const canonicalUrl = `${siteUrl}/${data.state}/${data.suburb}/`;
-
-const pageTitle = `Heavy Diesel Mechanics in ${suburbTitle} ${stateUpper} (${data.postcode}) | Interstate Freight Directory`;
-const pageDescription = `Compare verified heavy commercial vehicle repairers, prime mover workshops, and 24/7 mobile diesel breakdown units in ${suburbTitle} ${stateUpper} ${data.postcode}. Serving the ${data.corridor}.`;
-
-const primaryBusiness = data.businesses[0];
-
-const isRapidResponse = (tags: string[]) => {
-  return tags.some((t) => /24\/7|breakdown|emergency|roadside|hotline/i.test(t));
-};
-
-const getAccessBadges = (biz: any) => {
-  const badges = [];
-  const acc = biz.access || {};
-
-  if (acc.bDouble26m) {
-    badges.push({ label: '26m B-Double Cleared', icon: '🚛', class: 'border-emerald-500/30 bg-emerald-950/60 text-emerald-400' });
-  }
-  if (acc.roadTrain36m) {
-    badges.push({ label: 'Road Train / Staging Pad', icon: '🚚', class: 'border-cyan-500/30 bg-cyan-950/60 text-cyan-400' });
-  }
-  if (acc.driveThroughBays) {
-    badges.push({ label: 'Drive-Through Pit / Hoist', icon: '🔧', class: 'border-blue-500/30 bg-blue-950/60 text-blue-400' });
-  }
-  if (acc.nhvrRoadGazetted) {
-    badges.push({ label: 'NHVR Gazetted Route', icon: '🛣️', class: 'border-slate-600 bg-slate-900/80 text-slate-300' });
-  }
-
-  return badges;
-};
-
-<!doctype html>
-<html lang="en-AU" class="bg-slate-950 text-slate-100 antialiased selection:bg-amber-500 selection:text-black">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{pageTitle}</title>
-    <meta name="description" content={pageDescription} />
-    <link rel="canonical" href={canonicalUrl} />
-  </head>
-  <body class="min-h-screen pb-24 sm:pb-12">
-    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40">
-      <div class="mx-auto max-w-5xl px-4 py-3 sm:px-6 flex items-center justify-between">
-        <nav class="flex items-center space-x-2 text-xs font-medium text-slate-400" aria-label="Breadcrumb">
-          <a href="/" class="hover:text-amber-400">Home</a>
-          <span class="text-slate-600">/</span>
-          <span class="uppercase text-slate-400">{data.state}</span>
-          <span class="text-slate-600">/</span>
-          <span class="text-white font-semibold">{suburbTitle}</span>
-        </nav>
-        <div class="flex items-center gap-2">
-          <span id="live-vic-time" class="text-[11px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
-            AEST Checking...
-          </span>
-          <span class="text-xs text-amber-400 font-mono tracking-wide bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-            {stateUpper} {data.postcode}
-          </span>
-        </div>
-      </div>
-    </header>
-
-    <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <section class="mb-8">
-        <div class="flex flex-wrap items-center gap-2 mb-3">
-          <span class="rounded bg-slate-800 px-2.5 py-0.5 text-xs font-semibold text-slate-300 border border-slate-700">
-            {data.corridor}
-          </span>
-          <span class="rounded bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-400 border border-amber-500/20">
-            {data.lga}
-          </span>
-        </div>
-        <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-          Diesel Mechanics & Truck Repairs in {suburbTitle}, {stateUpper}
-        </h1>
-        <p class="mt-3 text-base text-slate-400 leading-relaxed max-w-3xl">
-          {data.localOverview}
-        </p>
-      </section>
-
-      <!-- Direct Arterials Strip -->
-      <div class="mb-8 rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Direct Arterial Freight Access:</span>
-        <div class="flex flex-wrap gap-2 mt-2">
-          {data.arterials.map((art) => (
-            <span class="rounded-md bg-slate-800 px-2.5 py-1 text-xs text-slate-300 font-medium border border-slate-700/50">
-              {art}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <!-- NHVR Access & Dimension Filter Ribbon -->
-      <AccessFilter />
-
-      <!-- Business Listings -->
-      <section class="mb-16">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold tracking-tight text-white">
-            Verified Operators in {suburbTitle} ({data.businesses.length})
-          </h2>
-          <span class="text-xs text-slate-400">Live Operating Status Sync</span>
-        </div>
-
-        <div class="space-y-6">
-          {data.businesses.map((biz, index) => {
-            const hasRapid = isRapidResponse(biz.tags);
-            const accessBadges = getAccessBadges(biz);
-            const acc = biz.access || {};
-            
-            // Build filter string based on explicit access flags
-            const capList = [
-              biz.name,
-              ...biz.tags,
-              acc.bDouble26m ? 'b-double prime mover' : '',
-              acc.roadTrain36m ? 'road train uncoupling' : '',
-              acc.driveThroughBays ? 'drive-through pit hoist bay' : '',
-              acc.nhvrRoadGazetted ? 'nhvr roadworthy' : ''
-            ].join(' ').toLowerCase();
-
-            return (
-              <article 
-                class="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-900/80 p-6 transition hover:border-slate-700 sm:flex-row sm:items-start gap-6 relative overflow-hidden"
-                data-biz-card="true"
-                data-has-rapid={hasRapid ? "true" : "false"}
-                data-capabilities={capList}
-              >
-                <div class="space-y-3 flex-1">
-                  <!-- Header Row -->
-                  <div class="flex flex-wrap items-center gap-2.5">
-                    <span class="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500 text-xs font-bold text-black shrink-0">
-                      #{index + 1}
-                    </span>
-                    <h3 class="text-xl font-bold text-white">
-                      {biz.name}
-                    </h3>
-                    
-                    <!-- Dynamic Live Status Pill -->
-                    <span class="status-pill inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold border transition">
-                      <span class="status-dot relative flex h-2 w-2"></span>
-                      <span class="status-label">Checking Hours...</span>
-                    </span>
-
-                    {hasRapid && (
-                      <span class="inline-flex items-center gap-1 rounded bg-red-950/70 border border-red-500/30 px-2 py-0.5 text-[10px] font-bold text-red-300">
-                        24/7 Breakdown Dispatch
-                      </span>
-                    )}
-                  </div>
-
-                  <!-- NHVR Access Dimension Badges -->
-                  {accessBadges.length > 0 && (
-                    <div class="flex flex-wrap gap-1.5 pt-0.5">
-                      {accessBadges.map((badge) => (
-                        <span class={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-bold ${badge.class}`}>
-                          <span>{badge.icon}</span>
-                          <span>{badge.label}</span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <!-- Rating Row -->
-                  <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                    <span class="inline-flex items-center gap-1 rounded bg-slate-800/80 border border-slate-700 px-2 py-0.5 text-amber-400 font-bold">
-                      ★ {biz.rating.toFixed(1)}
-                    </span>
-                    <span class="font-medium text-slate-300">Industry Index Score</span>
-                    <span class="text-slate-600">•</span>
-                    <span>{biz.address}</span>
-                  </div>
-
-                  <p class="text-sm text-slate-300 leading-relaxed">
-                    {biz.editorialSummary}
-                  </p>
-
-                  <div class="flex flex-wrap gap-1.5 pt-1">
-                    {biz.tags.map((tag) => (
-                      <span class="rounded bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-300 border border-slate-700/60">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  <!-- Claim / Update Trigger Link -->
-                  <div class="pt-2">
-                    <button 
-                      type="button"
-                      data-claim-trigger="true"
-                      data-biz-name={biz.name}
-                      class="text-[11px] text-slate-400 hover:text-amber-400 underline flex items-center gap-1 transition"
-                    >
-                      ⚙️ Workshop Owner? Verify or Update Details &rarr;
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Call & Action Column -->
-                <div class="flex flex-col sm:items-end justify-between self-stretch shrink-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-800">
-                  <div class="text-xs text-slate-400 mb-4 sm:text-right">
-                    <span class="block text-slate-500 mb-0.5">Emergency Contact:</span>
-                    <span class="text-lg font-mono font-bold text-white">{biz.phone}</span>
-                  </div>
-                  <div class="flex gap-2 w-full sm:w-auto">
-                    <a
-                      href={`tel:${biz.phone.replace(/\s+/g, '')}`}
-                      class={hasRapid ? "flex-1 sm:flex-none inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-bold transition active:scale-95 bg-red-500 text-white hover:bg-red-400 shadow-md shadow-red-950" : "flex-1 sm:flex-none inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-bold transition active:scale-95 bg-amber-500 text-black hover:bg-amber-400"}
-                    >
-                      📞 Call Dispatch
-                    </a>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      <!-- Nearby Arterial Hubs -->
-      <footer class="border-t border-slate-800 pt-8 mt-12">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
-          Adjacent Staging Hubs Along {data.corridor}
-        </h3>
-        <div class="flex flex-wrap gap-2">
-          {data.nearbySuburbs.map((sub) => (
-            <a
-              href={`/${data.state}/${sub.slug}/`}
-              class="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-amber-500/50 hover:text-white transition"
-            >
-              Mechanics in {sub.name} &rarr;
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {listings.map((item: any) => (
+        <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3">
+          <div class="flex justify-between items-start gap-2">
+            <h2 class="text-lg font-bold text-slate-100">{item.name}</h2>
+            {item.suburb && (
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-zinc-800 text-amber-400 shrink-0">
+                {item.suburb}
+              </span>
+            )}
+          </div>
+          <p class="text-xs text-slate-400">{item.address || `${item.suburb}, ${item.state}`}</p>
+          {item.phone && (
+            <a href={`tel:${item.phone}`} class="inline-block text-xs font-mono font-bold text-amber-400 hover:text-amber-300">
+              📞 {item.phone}
             </a>
-          ))}
+          )}
         </div>
-      </footer>
-    </main>
-
-    <ClaimListingModal />
-    <TelemetryTracker />
-  </body>
-</html>
+      ))}
+    </div>
+  </div>
+</Layout>
