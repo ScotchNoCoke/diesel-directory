@@ -1,8 +1,7 @@
-export async function onRequestPost(context: any) {
-  const { request } = context;
+export async function onRequestPost({ request }: { request: Request }) {
   try {
-    const data = await request.json();
-    const { businessName, email, phone, website } = data;
+    const data: any = await request.json();
+    const { businessName, phone, email, website } = data;
 
     if (!businessName || !phone || !email) {
       return new Response(
@@ -11,17 +10,21 @@ export async function onRequestPost(context: any) {
       );
     }
 
-    // Domain check
-    const emailDomain = email.split('@')[1]?.toLowerCase().trim() || '';
-    const websiteDomain = (website || '').replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].toLowerCase().trim();
+    const emailDomain = (email || '').split('@')[1]?.toLowerCase().trim();
+    const cleanWebsite = (website || '')
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split('/')[0]
+      .toLowerCase()
+      .trim();
 
-    const isMatch = websiteDomain && (emailDomain === websiteDomain || emailDomain.endsWith('.' + websiteDomain));
+    const isMatch = Boolean(cleanWebsite && (emailDomain === cleanWebsite || emailDomain.endsWith('.' + cleanWebsite)));
 
     if (isMatch) {
       return new Response(
         JSON.stringify({
           status: 'verified',
-          message: 'Official domain match confirmed. Instant verification link dispatched to your inbox.'
+          message: 'Official domain match confirmed. Verification link dispatched to your inbox.'
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
@@ -30,7 +33,7 @@ export async function onRequestPost(context: any) {
     return new Response(
       JSON.stringify({
         status: 'pending_review',
-        message: 'Claim received. Unmatched domain or personal email detected — queued for phone/ABN verification.'
+        message: 'Claim received. Unmatched domain detected — queued for phone/ABN verification.'
       }),
       { status: 202, headers: { 'Content-Type': 'application/json' } }
     );

@@ -203,7 +203,6 @@ import Layout from '../layouts/Layout.astro';
     const formData = new FormData(form);
     const payload: Record<string, any> = Object.fromEntries(formData.entries());
 
-    // Format checkboxes as booleans
     payload.bDoubleAccess = formData.has('bDoubleAccess');
     payload.roadTrainAccess = formData.has('roadTrainAccess');
     payload.driveThroughBays = formData.has('driveThroughBays');
@@ -216,10 +215,16 @@ import Layout from '../layouts/Layout.astro';
         body: JSON.stringify(payload)
       });
 
-      const text = await res.text(); let result: any = {}; try { result = JSON.parse(text); } catch { throw new Error(`Server returned HTTP ${res.status}: ${text.slice(0, 80)}`); }
+      const text = await res.text();
+      let result: any = null;
+      try {
+        result = text ? JSON.parse(text) : null;
+      } catch {
+        throw new Error(`Server returned HTTP ${res.status}: ${text.slice(0, 100) || 'Empty body'}`);
+      }
 
-      if (!res.ok) {
-        throw new Error(result.error || 'Failed to submit claim.');
+      if (!res.ok || !result) {
+        throw new Error(result?.error || `Server returned HTTP ${res.status}`);
       }
 
       if (result.status === 'verified') {
