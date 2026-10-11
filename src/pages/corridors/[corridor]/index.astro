@@ -1,7 +1,6 @@
 ---
 export const prerender = true;
 ---
----
 import '../../../styles/global.css';
 import type { GetStaticPaths } from 'astro';
 import suburbsData from '../../../data/suburbs.json';
@@ -76,7 +75,6 @@ const siteUrl = Astro.site ? Astro.site.toString().replace(/\/$/, '') : 'https:/
 const canonicalUrl = `${siteUrl}/corridors/${corridor}/`;
 const pageTitle = `${name} Heavy Diesel Breakdown & Workshop Directory`;
 const pageDescription = `Complete directory of heavy commercial truck mechanics, B-double yards, and 24/7 roadside breakdown response units along the ${name}.`;
----
 
 <!doctype html>
 <html lang="en-AU" class="bg-slate-950 text-slate-100 antialiased selection:bg-amber-500 selection:text-black">
