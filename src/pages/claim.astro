@@ -97,11 +97,11 @@ import Layout from '../layouts/Layout.astro';
           </div>
 
           <div class="space-y-1.5">
-            <label for="directPhone" class="text-slate-300 block">Direct Contact Number *</label>
+            <label for="phone" class="text-slate-300 block">Direct Contact Number *</label>
             <input
               type="tel"
-              id="directPhone"
-              name="directPhone"
+              id="phone"
+              name="phone"
               required
               placeholder="0400 000 000"
               class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
@@ -128,12 +128,12 @@ import Layout from '../layouts/Layout.astro';
         
         <div class="space-y-2 pt-1 font-sans text-xs">
           <label class="flex items-start gap-2.5 cursor-pointer text-slate-200">
-            <input type="checkbox" name="bDouble26m" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
+            <input type="checkbox" name="bDoubleAccess" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
             <span><strong>26m B-Double Gazetted Access:</strong> Facility has legal NHVR road access and turning clearance.</span>
           </label>
 
           <label class="flex items-start gap-2.5 cursor-pointer text-slate-200">
-            <input type="checkbox" name="roadTrain36m" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
+            <input type="checkbox" name="roadTrainAccess" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
             <span><strong>36m Road Train / A-Double Access:</strong> Site accommodates multi-combination staging / uncoupling.</span>
           </label>
 
@@ -143,7 +143,7 @@ import Layout from '../layouts/Layout.astro';
           </label>
 
           <label class="flex items-start gap-2.5 cursor-pointer text-slate-200">
-            <input type="checkbox" name="mobile247" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
+            <input type="checkbox" name="afterHoursDispatch" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
             <span><strong>24/7 Mobile Linehaul Response:</strong> Dedicated breakdown service vehicle available for roadside callouts.</span>
           </label>
         </div>
@@ -198,24 +198,42 @@ import Layout from '../layouts/Layout.astro';
 
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting Verification...';
+    statusMsg.className = 'hidden';
 
     const formData = new FormData(form);
-    const payload = Object.fromEntries(formData.entries());
+    const payload: Record<string, any> = Object.fromEntries(formData.entries());
+
+    // Format checkboxes as booleans
+    payload.bDoubleAccess = formData.has('bDoubleAccess');
+    payload.roadTrainAccess = formData.has('roadTrainAccess');
+    payload.driveThroughBays = formData.has('driveThroughBays');
+    payload.afterHoursDispatch = formData.has('afterHoursDispatch');
 
     try {
-      const subject = encodeURIComponent(`[DieselHub Listing Claim] ${payload.businessName} (${payload.suburb})`);
-      const body = encodeURIComponent(
-        `Business: ${payload.businessName}\nSuburb: ${payload.suburb}\nContact: ${payload.contactName} (${payload.role})\nEmail: ${payload.email}\nPhone: ${payload.directPhone}\nABN: ${payload.abn}\n\nAccess:\n- 26m B-Double: ${payload.bDouble26m ? 'Yes' : 'No'}\n- 36m Road Train: ${payload.roadTrain36m ? 'Yes' : 'No'}\n- Drive-Through: ${payload.driveThroughBays ? 'Yes' : 'No'}\n- 24/7 Mobile: ${payload.mobile247 ? 'Yes' : 'No'}\n\nNotes:\n${payload.notes || 'None'}`
-      );
+      const res = await fetch('/api/claim-listing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-      window.location.href = `mailto:admin@dieselhub.com.au?subject=${subject}&body=${body}`;
+      const result = await res.json();
 
-      statusMsg.className = 'p-4 rounded text-xs font-mono bg-emerald-950/80 border border-emerald-500/60 text-emerald-300 block';
-      statusMsg.textContent = '✓ Claim package generated. Your email client has opened with your verified credentials.';
-      submitBtn.textContent = 'Listing Claim Sent';
-    } catch (err) {
+      if (!res.ok) {
+        throw new Error(result.error || 'Failed to submit claim.');
+      }
+
+      if (result.status === 'verified') {
+        statusMsg.className = 'p-4 rounded text-xs font-mono bg-emerald-950/80 border border-emerald-500/60 text-emerald-300 block';
+        statusMsg.textContent = `✓ ${result.message}`;
+        submitBtn.textContent = 'Domain Verified';
+      } else {
+        statusMsg.className = 'p-4 rounded text-xs font-mono bg-amber-950/80 border border-amber-500/60 text-amber-300 block';
+        statusMsg.textContent = `✓ ${result.message}`;
+        submitBtn.textContent = 'Claim Queued for Review';
+      }
+    } catch (err: any) {
       statusMsg.className = 'p-4 rounded text-xs font-mono bg-red-950/80 border border-red-500/60 text-red-300 block';
-      statusMsg.textContent = 'An error occurred while generating verification.';
+      statusMsg.textContent = `✗ ${err.message || 'An error occurred while submitting verification.'}`;
       submitBtn.disabled = false;
       submitBtn.textContent = 'Retry Submission';
     }
