@@ -5,7 +5,7 @@ export const onRequest = defineMiddleware((context, next) => {
 
   if (url.hostname === 'www.dieselhub.com.au') {
     url.hostname = 'dieselhub.com.au';
-    return context.redirect(url.toString(), 301);
+    return Response.redirect(url.toString(), 301);
   }
 
   return next();
