@@ -3,7 +3,10 @@ import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://dieselhub.com.au', // Your production domain
-  adapter: cloudflare(),
+  site: 'https://dieselhub.com.au',
+  output: 'hybrid',
+  adapter: cloudflare({
+    imageService: 'cloudflare',
+  }),
   integrations: [sitemap()],
 });
