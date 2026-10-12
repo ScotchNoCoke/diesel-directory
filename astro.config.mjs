@@ -1,11 +1,9 @@
 import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
+import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  output: 'static',
-  adapter: cloudflare({
-    platformProxy: {
-      enabled: true
-    }
-  })
+  site: 'https://dieselhub.com.au', // Your production domain
+  adapter: cloudflare(),
+  integrations: [sitemap()],
 });
