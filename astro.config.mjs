@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://dieselhub.com.au',
-  output: 'hybrid',
+  output: 'server',
   adapter: cloudflare({
     imageService: 'cloudflare',
   }),
