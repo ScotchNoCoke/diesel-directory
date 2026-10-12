@@ -27,3 +27,5 @@ dist/
 .astro/
 .DS_Store
 *.log
+
+.wrangler/

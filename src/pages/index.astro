@@ -30,6 +30,8 @@ const humeSuburbs = suburbs.filter((s: any) =>
 
 // Fallback to all if regional arrays are sparse
 const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5);
+
+const totalVerified = typeof listings !== "undefined" ? listings.filter(l => l.verified || l.data?.verified).length : 0;
 ---
 
 <Layout
