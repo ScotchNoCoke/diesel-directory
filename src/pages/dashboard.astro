@@ -28,12 +28,22 @@ if (!sessionData?.businessId) {
 
 const businessId = sessionData.businessId;
 let profile: any = null;
+let inquiries: any[] = [];
 
 if (db) {
   try {
     profile = await db.prepare("SELECT * FROM workshop_profiles WHERE business_id = ?").bind(businessId).first();
   } catch (e) {
     console.error("Error fetching workshop profile:", e);
+  }
+
+  try {
+    const res = await db.prepare(
+      "SELECT * FROM dispatch_inquiries WHERE business_id = ? ORDER BY created_at DESC LIMIT 20"
+    ).bind(businessId).all();
+    inquiries = res.results || [];
+  } catch (e) {
+    console.error("Error fetching dispatch inquiries:", e);
   }
 }
 
@@ -88,9 +98,76 @@ const errorMsg = reqUrl.searchParams.get("msg");
         </div>
       )}
 
+      <!-- Section: Inbound Leads & Breakdown Inquiries -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800/80 pb-4">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Inbound Breakdown Requests & Driver Leads
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Live inquiries submitted directly through your Diesel Hub directory listing.</p>
+          </div>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 self-start sm:self-auto">
+            {inquiries.length} {inquiries.length === 1 ? "Request" : "Requests"}
+          </span>
+        </div>
+
+        {inquiries.length === 0 ? (
+          <div class="text-center py-8 text-slate-500 text-sm">
+            <svg class="w-8 h-8 mx-auto text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+            No incoming breakdown requests yet. Inquiries will appear here in real time.
+          </div>
+        ) : (
+          <div class="divide-y divide-slate-800/60">
+            {inquiries.map((inq: any) => (
+              <div class="py-4 first:pt-0 last:pb-0 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div class="space-y-1.5 max-w-2xl">
+                  <div class="flex items-center gap-2">
+                    <span class={`inline-block w-2 h-2 rounded-full ${inq.status === "new" ? "bg-amber-400 animate-pulse" : "bg-slate-600"}`}></span>
+                    <span class="text-sm font-bold text-white">{inq.driver_name}</span>
+                    <span class="text-xs text-slate-500 font-mono">&bull; {new Date(inq.created_at * 1000).toLocaleString("en-AU", { dateStyle: "short", timeStyle: "short" })}</span>
+                    {inq.vehicle_type && (
+                      <span class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium">
+                        {inq.vehicle_type}
+                      </span>
+                    )}
+                  </div>
+                  {inq.breakdown_location && (
+                    <p class="text-xs text-amber-400/90 flex items-center gap-1 font-medium">
+                      📍 {inq.breakdown_location}
+                    </p>
+                  )}
+                  <p class="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800/50">
+                    &ldquo;{inq.issue_description}&rdquo;
+                  </p>
+                </div>
+
+                <div class="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-2 shrink-0">
+                  <a
+                    href={`tel:${inq.driver_phone.replace(/[^0-9+]/g, "")}`}
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs transition"
+                  >
+                    📞 Call Driver ({inq.driver_phone})
+                  </a>
+                  <span class="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">
+                    Status: <span class={inq.status === "new" ? "text-amber-400" : "text-slate-400"}>{inq.status}</span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <!-- Section: Workshop Form -->
       <form method="POST" action="/api/dashboard/update" class="space-y-8">
         
-        <!-- Section 1: Emergency & Operations -->
+        <!-- Emergency & Operations -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
           <div class="border-b border-slate-800/80 pb-4">
             <h2 class="text-lg font-bold text-white flex items-center gap-2">
@@ -149,7 +226,7 @@ const errorMsg = reqUrl.searchParams.get("msg");
           </div>
         </div>
 
-        <!-- Section 2: Heavy Vehicle Yard & Bay Access -->
+        <!-- Heavy Vehicle Yard & Bay Access -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
           <div class="border-b border-slate-800/80 pb-4">
             <h2 class="text-lg font-bold text-white">Yard Specs & Access Capabilities</h2>
@@ -184,7 +261,7 @@ const errorMsg = reqUrl.searchParams.get("msg");
           </div>
         </div>
 
-        <!-- Section 3: OEM Diagnostics Tooling -->
+        <!-- OEM Diagnostics Tooling -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
           <div class="border-b border-slate-800/80 pb-4">
             <h2 class="text-lg font-bold text-white">Diagnostic Software & OEM Coverage</h2>
@@ -220,7 +297,7 @@ const errorMsg = reqUrl.searchParams.get("msg");
           </div>
         </div>
 
-        <!-- Section 4: General Contact Info -->
+        <!-- General Workshop Details -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
           <div class="border-b border-slate-800/80 pb-4">
             <h2 class="text-lg font-bold text-white">General Workshop Details</h2>
