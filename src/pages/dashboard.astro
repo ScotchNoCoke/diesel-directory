@@ -1,234 +1,258 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import { env } from 'cloudflare:workers';
-import { getSession } from '../lib/auth';
+import Layout from "../layouts/Layout.astro";
+import { env } from "cloudflare:workers";
 
 export const prerender = false;
 
-let db: any = null;
-let sessionKv: any = null;
-let session: any = null;
-let profile: any = null;
+const cookieHeader = Astro.request.headers.get("cookie") || "";
+const sessionMatch = cookieHeader.match(/dh_session=([^;]+)/);
+const sessionId = sessionMatch ? sessionMatch[1].trim() : null;
 
+const sessionKv = (env as any)?.SESSION;
+const db = (env as any)?.DB;
+
+if (!sessionId || !sessionKv) {
+  return Astro.redirect("/login?error=" + encodeURIComponent("Please sign in to access your dashboard."));
+}
+
+let sessionData = null;
 try {
-  db = (env as any)?.DB;
-  sessionKv = (env as any)?.SESSION;
-
-  const cookieHeader = Astro.request.headers.get('Cookie') || '';
-  const sessionMatch = cookieHeader.match(/dh_session=([^;]+)/);
-  const sessionId = sessionMatch ? sessionMatch[1] : null;
-
-  session = sessionId && sessionKv ? await getSession(sessionKv, sessionId) : null;
-} catch (err) {
-  console.error('Dashboard session error:', err);
+  sessionData = await sessionKv.get(`session:${sessionId}`, "json");
+} catch (e) {
+  console.error("Error reading session KV:", e);
 }
 
-if (!session) {
-  return Astro.redirect('/?auth=required');
+if (!sessionData?.businessId) {
+  return Astro.redirect("/login?error=" + encodeURIComponent("Invalid session."));
 }
+
+const businessId = sessionData.businessId;
+let profile: any = null;
 
 if (db) {
   try {
-    profile = await db
-      .prepare('SELECT * FROM workshop_profiles WHERE business_id = ?')
-      .bind(session.businessId)
-      .first();
+    profile = await db.prepare("SELECT * FROM workshop_profiles WHERE business_id = ?").bind(businessId).first();
   } catch (e) {
-    console.error('Error fetching workshop profile:', e);
+    console.error("Error fetching workshop profile:", e);
   }
 }
 
-const savedMessage = Astro.url.searchParams.get('saved') === '1';
+// Parse diagnostics JSON
+let activeDiagnostics: string[] = [];
+if (profile?.diagnostic_software) {
+  try {
+    activeDiagnostics = JSON.parse(profile.diagnostic_software);
+  } catch {
+    activeDiagnostics = [];
+  }
+}
+
+const reqUrl = new URL(Astro.request.url);
+const status = reqUrl.searchParams.get("status");
+const errorMsg = reqUrl.searchParams.get("msg");
 ---
 
-<Layout title="Workshop Owner Dashboard | Diesel Hub Australia">
+<Layout title={`Workshop Dashboard | ${profile?.name || "Diesel Hub"}`}>
   <main class="min-h-screen bg-slate-950 text-slate-100 py-10 px-4 sm:px-6 lg:px-8">
     <div class="max-w-5xl mx-auto space-y-8">
       
       <!-- Top Bar -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-800">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Verified Workshop
-            </span>
-            <span class="text-xs font-mono text-slate-500">ID: {session.businessId}</span>
-          </div>
-          <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">
-            Workshop Management
-          </h1>
-          <p class="text-sm text-slate-400">
-            Logged in as <span class="text-amber-400 font-mono">{session.email}</span>
-          </p>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2">
+            ✓ Verified Workshop Profile
+          </span>
+          <h1 class="text-3xl font-extrabold text-white tracking-tight">{profile?.name || "Workshop Dashboard"}</h1>
+          <p class="text-sm text-slate-400 mt-1">Listing ID: <code class="text-amber-400 font-mono text-xs">{businessId}</code> &bull; Suburb: {profile?.suburb || "Victoria"}</p>
         </div>
-
         <div class="flex items-center gap-3">
-          <a
-            href="/"
-            class="px-4 py-2 rounded-xl text-sm font-medium bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition"
-          >
-            Public Directory
+          <a href={`/claim?business=${encodeURIComponent(profile?.name || "")}&suburb=${encodeURIComponent(profile?.suburb || "")}`} target="_blank" class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition">
+            Preview Listing ↗
           </a>
           <form method="POST" action="/api/auth/logout">
-            <button
-              type="submit"
-              class="px-4 py-2 rounded-xl text-sm font-semibold bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition cursor-pointer"
-            >
-              Sign Out
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition cursor-pointer">
+              Log Out
             </button>
           </form>
         </div>
       </div>
 
-      {savedMessage && (
-        <div class="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm flex items-center justify-between">
-          <span>Profile changes updated successfully.</span>
+      {status === "success" && (
+        <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-sm flex items-center justify-between">
+          <span>✓ Profile changes saved successfully and deployed to directory.</span>
+        </div>
+      )}
+      {status === "error" && (
+        <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+          ✕ Error: {errorMsg || "Failed to save profile changes."}
         </div>
       )}
 
-      <!-- Workshop Update Form -->
       <form method="POST" action="/api/dashboard/update" class="space-y-8">
         
-        <!-- Contact & Operations Card -->
+        <!-- Section 1: Emergency & Operations -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
-          <h2 class="text-xl font-bold text-white flex items-center gap-2">
-            <span>Workshop Details & Contact Lines</span>
-          </h2>
+          <div class="border-b border-slate-800/80 pb-4">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+              24/7 Breakdown & Operational Availability
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Stranded drivers and fleet dispatchers filter directly for after-hours emergency units.</p>
+          </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">Trade / Trading Name</label>
+              <label for="emergency_phone" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                24/7 Breakdown Hotline
+              </label>
               <input
+                id="emergency_phone"
                 type="text"
-                name="name"
-                value={profile?.name || ''}
-                placeholder="e.g. Western Corridor Diesel Repairs"
-                class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                name="emergency_phone"
+                value={profile?.emergency_phone || ""}
+                placeholder="0400 999 888"
+                class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
               />
+              <span class="text-[11px] text-slate-500 mt-1 block">Dedicated line for after-hours roadside assistance.</span>
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">Primary Workshop Phone</label>
+              <label for="emergency_radius_km" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                Mobile Field Service Radius (km)
+              </label>
               <input
-                type="text"
-                name="phone"
-                value={profile?.phone || ''}
-                placeholder="e.g. 03 9000 0000"
-                class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                id="emergency_radius_km"
+                type="number"
+                name="emergency_radius_km"
+                value={profile?.emergency_radius_km ?? 50}
+                min="0"
+                max="500"
+                class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
               />
+              <span class="text-[11px] text-slate-500 mt-1 block">Distance your mobile ute/truck will travel from the workshop.</span>
             </div>
+          </div>
 
-            <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">24/7 Breakdown Dispatch Line</label>
+          <div class="pt-2">
+            <label class="relative flex items-start gap-3 cursor-pointer">
               <input
-                type="text"
-                name="after_hours_phone"
-                value={profile?.after_hours_phone || ''}
-                placeholder="e.g. 0400 123 456"
-                class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                type="checkbox"
+                name="is_open_now"
+                checked={profile?.is_open_now !== 0}
+                class="w-4 h-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-950 mt-1"
               />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">Workshop Yard Address</label>
-              <input
-                type="text"
-                name="address"
-                value={profile?.address || ''}
-                placeholder="e.g. 14 Logistics Drive, Truganina VIC 3029"
-                class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
+              <div>
+                <span class="text-sm font-semibold text-white">Workshop is currently accepting fleet jobs</span>
+                <p class="text-xs text-slate-400">Uncheck this if your workshop is at max capacity and not taking unbooked drive-ins.</p>
+              </div>
+            </label>
           </div>
         </div>
 
-        <!-- Heavy Vehicle Capabilities -->
+        <!-- Section 2: Heavy Vehicle Yard & Bay Access -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
-          <h2 class="text-xl font-bold text-white">Capabilities & Heavy Vehicle Equipment</h2>
-          <p class="text-sm text-slate-400">These badges will be highlighted on your corridor & suburb listing cards.</p>
+          <div class="border-b border-slate-800/80 pb-4">
+            <h2 class="text-lg font-bold text-white">Yard Specs & Access Capabilities</h2>
+            <p class="text-xs text-slate-400 mt-1">Help drivers ensure their vehicle combinations can physically enter and turn around.</p>
+          </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label class="flex items-start gap-3 p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
-              <input
-                type="checkbox"
-                name="is_24_7"
-                value="1"
-                checked={Boolean(profile?.is_24_7)}
-                class="mt-1 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-900"
-              />
-              <div>
-                <span class="text-sm font-semibold text-white block">24/7 Emergency Breakdown</span>
-                <span class="text-xs text-slate-400 block mt-0.5">Available for highway callouts & roadside assistance</span>
-              </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 cursor-pointer transition">
+              <input type="checkbox" name="b_double_access" checked={!!profile?.b_double_access} class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-700" />
+              <span class="text-xs font-semibold text-slate-200">B-Double Turnaround</span>
             </label>
 
-            <label class="flex items-start gap-3 p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
-              <input
-                type="checkbox"
-                name="has_mobile_service"
-                value="1"
-                checked={Boolean(profile?.has_mobile_service)}
-                class="mt-1 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-900"
-              />
-              <div>
-                <span class="text-sm font-semibold text-white block">Mobile Field Mechanics</span>
-                <span class="text-xs text-slate-400 block mt-0.5">Fully-equipped mobile service trucks for on-site repairs</span>
-              </div>
+            <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 cursor-pointer transition">
+              <input type="checkbox" name="road_train_access" checked={!!profile?.road_train_access} class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-700" />
+              <span class="text-xs font-semibold text-slate-200">Road Train Rated Yard</span>
             </label>
 
-            <label class="flex items-start gap-3 p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
-              <input
-                type="checkbox"
-                name="has_b_double_access"
-                value="1"
-                checked={Boolean(profile?.has_b_double_access)}
-                class="mt-1 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-900"
-              />
-              <div>
-                <span class="text-sm font-semibold text-white block">B-Double & Road Train Turnaround</span>
-                <span class="text-xs text-slate-400 block mt-0.5">Direct heavy vehicle parking & unhook facilities in yard</span>
-              </div>
+            <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 cursor-pointer transition">
+              <input type="checkbox" name="drive_through_bays" checked={!!profile?.drive_through_bays} class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-700" />
+              <span class="text-xs font-semibold text-slate-200">Drive-Through Bays</span>
             </label>
 
-            <label class="flex items-start gap-3 p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
-              <input
-                type="checkbox"
-                name="has_rwc"
-                value="1"
-                checked={Boolean(profile?.has_rwc)}
-                class="mt-1 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-900"
-              />
-              <div>
-                <span class="text-sm font-semibold text-white block">Licensed Heavy Vehicle RWC</span>
-                <span class="text-xs text-slate-400 block mt-0.5">Accredited roadworthy tester for trucks & trailers</span>
-              </div>
+            <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 cursor-pointer transition">
+              <input type="checkbox" name="trailer_parking" checked={!!profile?.trailer_parking} class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-700" />
+              <span class="text-xs font-semibold text-slate-200">Trailer Drop Yard</span>
             </label>
 
-            <label class="flex items-start gap-3 p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition sm:col-span-2">
-              <input
-                type="checkbox"
-                name="has_dpf_service"
-                value="1"
-                checked={Boolean(profile?.has_dpf_service)}
-                class="mt-1 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-900"
-              />
-              <div>
-                <span class="text-sm font-semibold text-white block">DPF / SCR & Emissions Diagnostics</span>
-                <span class="text-xs text-slate-400 block mt-0.5">OEM-level diagnostic tooling, DPF baking, and AdBlue fault rectification</span>
-              </div>
+            <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 cursor-pointer transition sm:col-span-2">
+              <input type="checkbox" name="rwc_licensed" checked={!!profile?.rwc_licensed} class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-700" />
+              <span class="text-xs font-semibold text-slate-200">Licensed Heavy Vehicle Tester (RWC / CoR)</span>
             </label>
           </div>
         </div>
 
-        <!-- Submit Button -->
-        <div class="flex justify-end">
+        <!-- Section 3: OEM Diagnostics Tooling -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+          <div class="border-b border-slate-800/80 pb-4">
+            <h2 class="text-lg font-bold text-white">Diagnostic Software & OEM Coverage</h2>
+            <p class="text-xs text-slate-400 mt-1">Select all proprietary scan tools and electronic diagnostic software licensed at this branch.</p>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {[
+              "Cummins INSITE",
+              "Detroit DiagnosticLink",
+              "CAT Electronic Technician",
+              "PACCAR DAVIE",
+              "Volvo / Mack Tech Tool",
+              "Scania SDP3",
+              "Isuzu IDSS",
+              "Hino DX2",
+              "Allison DOC",
+              "Eaton ServiceRanger",
+              "Wabco / Knorr EBS",
+              "Jaltest Universal"
+            ].map(tool => (
+              <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 cursor-pointer transition">
+                <input
+                  type="checkbox"
+                  name="diagnostic_software"
+                  value={tool}
+                  checked={activeDiagnostics.includes(tool)}
+                  class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-700"
+                />
+                <span class="text-xs text-slate-300 font-medium">{tool}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <!-- Section 4: General Contact Info -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+          <div class="border-b border-slate-800/80 pb-4">
+            <h2 class="text-lg font-bold text-white">General Workshop Details</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="phone" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Office Phone</label>
+              <input id="phone" type="text" name="phone" value={profile?.phone || ""} class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:ring-2 focus:ring-amber-500" />
+            </div>
+
+            <div>
+              <label for="website" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Website URL</label>
+              <input id="website" type="text" name="website" value={profile?.website || ""} class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:ring-2 focus:ring-amber-500" />
+            </div>
+
+            <div class="md:col-span-2">
+              <label for="address" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Street Address</label>
+              <input id="address" type="text" name="address" value={profile?.address || ""} placeholder="e.g. 12 Transport Way" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:ring-2 focus:ring-amber-500" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-4 pt-4">
           <button
             type="submit"
-            class="px-8 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition cursor-pointer"
+            class="px-8 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 transition cursor-pointer text-sm"
           >
-            Save Workshop Profile &rarr;
+            Save Profile & Update Directory &rarr;
           </button>
         </div>
+
       </form>
 
     </div>

@@ -1,0 +1,105 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { env } from "cloudflare:workers";
+
+export const prerender = false;
+
+// If already authenticated via dh_session cookie, redirect straight to /dashboard
+const cookieHeader = Astro.request.headers.get("cookie") || "";
+const sessionMatch = cookieHeader.match(/dh_session=([^;]+)/);
+const sessionId = sessionMatch ? sessionMatch[1].trim() : null;
+const sessionKv = (env as any)?.SESSION;
+
+if (sessionId && sessionKv) {
+  try {
+    const sessionData = await sessionKv.get(`session:${sessionId}`, "json");
+    if (sessionData?.businessId) {
+      return Astro.redirect("/dashboard");
+    }
+  } catch (e) {
+    // Session lookup failed, continue rendering login
+  }
+}
+
+const reqUrl = new URL(Astro.request.url);
+const error = reqUrl.searchParams.get("error") || "";
+---
+
+<Layout title="Workshop Sign In | Diesel Hub Australia">
+  <main class="min-h-[75vh] flex items-center justify-center py-16 px-4 sm:px-6 lg:px-8 bg-slate-950 text-slate-100">
+    <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 sm:p-10 relative overflow-hidden">
+      <div class="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="space-y-6">
+        <div class="space-y-2">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            Owner Portal
+          </span>
+          <h1 class="text-3xl font-extrabold tracking-tight text-white">
+            Workshop Sign In
+          </h1>
+          <p class="text-sm text-slate-400">
+            Manage your heavy vehicle repair listing, 24/7 breakdown lines, and workshop capabilities.
+          </p>
+        </div>
+
+        {error && (
+          <div class="p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400">
+            {error}
+          </div>
+        )}
+
+        <form method="POST" action="/api/auth/login" class="space-y-4">
+          <div>
+            <label for="email" class="block text-sm font-medium text-slate-300 mb-1.5">
+              Account Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              required
+              placeholder="manager@workshop.com.au"
+              class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition text-sm"
+            />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="password" class="block text-sm font-medium text-slate-300">
+                Password
+              </label>
+            </div>
+            <input
+              id="password"
+              type="password"
+              name="password"
+              required
+              placeholder="••••••••"
+              class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition text-sm"
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="w-full inline-flex items-center justify-center font-semibold text-sm px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 transition duration-150 shadow-lg shadow-amber-500/20 cursor-pointer mt-2"
+          >
+            Sign In to Dashboard &rarr;
+          </button>
+        </form>
+
+        <div class="border-t border-slate-800/80 pt-4 text-center space-y-2">
+          <p class="text-xs text-slate-400">
+            Haven&#39;t claimed your listing yet?
+          </p>
+          <a
+            href="/"
+            class="inline-block text-xs font-semibold text-amber-400 hover:text-amber-300 transition"
+          >
+            Find your workshop in the directory to claim &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>

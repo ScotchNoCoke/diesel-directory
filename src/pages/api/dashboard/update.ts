@@ -1,6 +1,5 @@
-import type { APIRoute } from 'astro';
-import { env } from 'cloudflare:workers';
-import { getSession } from '../../../lib/auth';
+import type { APIRoute } from "astro";
+import { env } from "cloudflare:workers";
 
 export const prerender = false;
 
@@ -10,66 +9,86 @@ export const POST: APIRoute = async (context) => {
     const sessionKv = (env as any)?.SESSION;
 
     if (!db || !sessionKv) {
-      return new Response(JSON.stringify({ error: 'Bindings missing' }), { status: 500 });
+      return context.redirect("/dashboard?status=error&msg=" + encodeURIComponent("Database or session store offline"));
     }
 
-    const cookieHeader = context.request.headers.get('Cookie') || '';
-    const match = cookieHeader.match(/dh_session=([^;]+)/);
-    const sessionId = match ? match[1] : null;
+    // Verify session
+    const cookieHeader = context.request.headers.get("cookie") || "";
+    const sessionMatch = cookieHeader.match(/dh_session=([^;]+)/);
+    const sessionId = sessionMatch ? sessionMatch[1].trim() : null;
 
-    const session = sessionId ? await getSession(sessionKv, sessionId) : null;
-    if (!session) {
-      return context.redirect('/?auth=expired');
+    if (!sessionId) {
+      return context.redirect("/login?error=" + encodeURIComponent("Session expired. Please sign in again."));
     }
 
+    const sessionData = await sessionKv.get(`session:${sessionId}`, "json");
+    if (!sessionData?.businessId) {
+      return context.redirect("/login?error=" + encodeURIComponent("Session invalid."));
+    }
+
+    const businessId = sessionData.businessId;
     const formData = await context.request.formData();
-    const name = formData.get('name')?.toString() || '';
-    const phone = formData.get('phone')?.toString() || '';
-    const afterHoursPhone = formData.get('after_hours_phone')?.toString() || '';
-    const address = formData.get('address')?.toString() || '';
-    const is247 = formData.get('is_24_7') === '1' ? 1 : 0;
-    const hasMobile = formData.get('has_mobile_service') === '1' ? 1 : 0;
-    const hasBDouble = formData.get('has_b_double_access') === '1' ? 1 : 0;
-    const hasRwc = formData.get('has_rwc') === '1' ? 1 : 0;
-    const hasDpf = formData.get('has_dpf_service') === '1' ? 1 : 0;
+
+    // General Profile
+    const phone = formData.get("phone")?.toString()?.trim() || "";
+    const website = formData.get("website")?.toString()?.trim() || "";
+    const address = formData.get("address")?.toString()?.trim() || "";
+
+    // Emergency & Operations
+    const emergencyPhone = formData.get("emergency_phone")?.toString()?.trim() || "";
+    const emergencyRadiusKm = parseInt(formData.get("emergency_radius_km")?.toString() || "50", 10);
+    const isOpenNow = formData.get("is_open_now") === "on" ? 1 : 0;
+
+    // Heavy Access Specs
+    const bDoubleAccess = formData.get("b_double_access") === "on" ? 1 : 0;
+    const roadTrainAccess = formData.get("road_train_access") === "on" ? 1 : 0;
+    const driveThroughBays = formData.get("drive_through_bays") === "on" ? 1 : 0;
+    const trailerParking = formData.get("trailer_parking") === "on" ? 1 : 0;
+    const rwcLicensed = formData.get("rwc_licensed") === "on" ? 1 : 0;
+
+    // Diagnostics (multiple checkboxes collected as JSON string)
+    const diagnosticsList = formData.getAll("diagnostic_software").map(item => item.toString());
+    const diagnosticSoftware = JSON.stringify(diagnosticsList);
+
     const now = Math.floor(Date.now() / 1000);
 
-    await db
-      .prepare(
-        `INSERT INTO workshop_profiles (
-          business_id, name, phone, after_hours_phone, address,
-          is_24_7, has_mobile_service, has_b_double_access, has_rwc, has_dpf_service, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(business_id) DO UPDATE SET
-          name = excluded.name,
-          phone = excluded.phone,
-          after_hours_phone = excluded.after_hours_phone,
-          address = excluded.address,
-          is_24_7 = excluded.is_24_7,
-          has_mobile_service = excluded.has_mobile_service,
-          has_b_double_access = excluded.has_b_double_access,
-          has_rwc = excluded.has_rwc,
-          has_dpf_service = excluded.has_dpf_service,
-          updated_at = excluded.updated_at`
-      )
-      .bind(
-        session.businessId,
-        name,
-        phone,
-        afterHoursPhone,
-        address,
-        is247,
-        hasMobile,
-        hasBDouble,
-        hasRwc,
-        hasDpf,
-        now
-      )
-      .run();
+    await db.prepare(`
+      UPDATE workshop_profiles
+      SET 
+        phone = ?,
+        website = ?,
+        address = ?,
+        emergency_phone = ?,
+        emergency_radius_km = ?,
+        is_open_now = ?,
+        b_double_access = ?,
+        road_train_access = ?,
+        drive_through_bays = ?,
+        trailer_parking = ?,
+        rwc_licensed = ?,
+        diagnostic_software = ?,
+        updated_at = ?
+      WHERE business_id = ?
+    `).bind(
+      phone,
+      website,
+      address,
+      emergencyPhone,
+      emergencyRadiusKm,
+      isOpenNow,
+      bDoubleAccess,
+      roadTrainAccess,
+      driveThroughBays,
+      trailerParking,
+      rwcLicensed,
+      diagnosticSoftware,
+      now,
+      businessId
+    ).run();
 
-    return context.redirect('/dashboard?saved=1');
+    return context.redirect("/dashboard?status=success");
   } catch (err: any) {
-    console.error('Update profile error:', err);
-    return new Response(JSON.stringify({ error: err?.message || String(err) }), { status: 500 });
+    console.error("Dashboard update error:", err);
+    return context.redirect("/dashboard?status=error&msg=" + encodeURIComponent(err?.message || "Failed to update profile"));
   }
 };
