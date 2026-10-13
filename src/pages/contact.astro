@@ -1,140 +1,160 @@
 ---
+import Layout from '../layouts/Layout.astro';
+
 export const prerender = false;
 ---
 
-<!DOCTYPE html>
-<html lang="en" class="bg-[#0b0c10] text-[#e0e2ec]">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contact Admin & Operations | Diesel Hub</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="min-h-screen bg-[#0a0a0c] text-neutral-200 antialiased font-sans">
-  <!-- Minimal Top Header -->
-  <header class="border-b border-neutral-800 bg-[#121316] px-6 py-4 flex items-center justify-between">
-    <a href="/" class="flex items-center gap-3 hover:opacity-90 transition">
-      <div class="h-8 w-8 bg-amber-500 rounded flex items-center justify-center font-black text-black text-sm tracking-tighter">DH</div>
-      <div>
-        <span class="text-sm font-mono font-bold tracking-wider uppercase text-white block">Diesel Hub</span>
-        <span class="text-[10px] text-neutral-400 font-mono uppercase block -mt-1">Heavy Transport Index</span>
+<Layout title="Contact Operations & Fleet Inquiries | Diesel Hub">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+    <!-- Header Section with Industrial Accents -->
+    <div class="mb-8 border-b border-neutral-800 pb-6">
+      <div class="flex items-center gap-2 mb-2 font-mono text-xs text-amber-500 uppercase tracking-widest">
+        <span class="inline-block w-2 h-2 bg-amber-500"></span>
+        <span>OPS DISPATCH // SECURE COMMS</span>
       </div>
-    </a>
-    <div class="flex items-center gap-4 text-xs font-mono">
-      <a href="/" class="text-neutral-400 hover:text-white transition">← Back to Directory</a>
-    </div>
-  </header>
-
-  <main class="max-w-3xl mx-auto px-6 py-12">
-    <div class="border-l-4 border-amber-500 pl-4 mb-8">
-      <span class="text-xs font-mono uppercase text-amber-400 tracking-wider font-semibold">Inquiries & Operations</span>
-      <h1 class="text-3xl font-bold tracking-tight text-white mt-1">Contact Diesel Hub</h1>
-      <p class="text-sm text-neutral-400 mt-2 leading-relaxed">
-        Speak with our operations team regarding fleet contracts, verified workshop listings, corridor partnerships, or technical support.
+      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white uppercase font-sans">
+        Contact Operations
+      </h1>
+      <p class="text-sm sm:text-base text-neutral-400 mt-2 max-w-2xl leading-relaxed">
+        Direct channel for interstate fleet accounts, corridor mechanical partnerships, listing verifications, and technical support.
       </p>
     </div>
 
-    <div class="bg-[#111215] border border-neutral-800 rounded-lg p-6 sm:p-8 shadow-xl">
-      <form id="contactForm" class="space-y-5">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="name">
-              Full Name <span class="text-amber-500">*</span>
-            </label>
-            <input 
-              type="text" 
-              id="name" 
-              name="name" 
-              required 
-              placeholder="e.g. John Henderson" 
-              class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 transition"
-            />
-          </div>
-          <div>
-            <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="company_name">
-              Fleet / Business Name
-            </label>
-            <input 
-              type="text" 
-              id="company_name" 
-              name="company_name" 
-              placeholder="e.g. Pacific Linehaul Transport" 
-              class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 transition"
-            />
-          </div>
-        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <!-- Left 2 Cols: Technical Form -->
+      <div class="lg:col-span-2 bg-[#121316] border border-neutral-800 rounded p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-hazard-stripes opacity-80"></div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="email">
-              Email Address <span class="text-amber-500">*</span>
-            </label>
-            <input 
-              type="email" 
-              id="email" 
-              name="email" 
-              required 
-              placeholder="contact@company.com.au" 
-              class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 transition"
-            />
+        <form id="contactForm" class="space-y-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="name">
+                Contact Name <span class="text-amber-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="name" 
+                name="name" 
+                required 
+                placeholder="e.g. John Henderson" 
+                class="w-full bg-[#181a1f] border border-neutral-700/80 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition font-sans"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="company_name">
+                Fleet / Workshop Name
+              </label>
+              <input 
+                type="text" 
+                id="company_name" 
+                name="company_name" 
+                placeholder="e.g. Pacific Linehaul Transport" 
+                class="w-full bg-[#181a1f] border border-neutral-700/80 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition font-sans"
+              />
+            </div>
           </div>
-          <div>
-            <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="phone">
-              Direct Phone Number
-            </label>
-            <input 
-              type="tel" 
-              id="phone" 
-              name="phone" 
-              placeholder="0412 345 678" 
-              class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 transition"
-            />
-          </div>
-        </div>
 
-        <div>
-          <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="category">
-            Nature of Inquiry <span class="text-amber-500">*</span>
-          </label>
-          <select 
-            id="category" 
-            name="category" 
-            class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition font-sans"
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="email">
+                Email Address <span class="text-amber-500">*</span>
+              </label>
+              <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                required 
+                placeholder="dispatch@carrier.com.au" 
+                class="w-full bg-[#181a1f] border border-neutral-700/80 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition font-sans"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="phone">
+                Phone Number
+              </label>
+              <input 
+                type="tel" 
+                id="phone" 
+                name="phone" 
+                placeholder="0412 345 678" 
+                class="w-full bg-[#181a1f] border border-neutral-700/80 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition font-mono"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="category">
+              Inquiry Type <span class="text-amber-500">*</span>
+            </label>
+            <select 
+              id="category" 
+              name="category" 
+              class="w-full bg-[#181a1f] border border-neutral-700/80 rounded px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition font-sans"
+            >
+              <option value="general">General Operations / Feedback</option>
+              <option value="claim_inquiry">Workshop Listing & Verification Inquiry</option>
+              <option value="quote_callout">Fleet Account & Volume Servicing</option>
+              <option value="emergency">Technical Support</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="message">
+              Message Details <span class="text-amber-500">*</span>
+            </label>
+            <textarea 
+              id="message" 
+              name="message" 
+              rows="4" 
+              required 
+              placeholder="State your highway corridor, workshop details, or fleet requirements..." 
+              class="w-full bg-[#181a1f] border border-neutral-700/80 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition resize-y font-sans"
+            ></textarea>
+          </div>
+
+          <div id="formStatus" class="hidden text-xs font-mono p-3 rounded"></div>
+
+          <button 
+            type="submit" 
+            id="submitBtn" 
+            class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-black font-mono font-bold uppercase tracking-wider text-xs rounded transition flex items-center justify-center gap-2 cursor-pointer shadow-lg active:translate-y-0.5"
           >
-            <option value="general">General Operations / Feedback</option>
-            <option value="claim_inquiry">Workshop Listing & Claim Inquiry</option>
-            <option value="quote_callout">Fleet Partnership / Volume Linehaul Service</option>
-            <option value="emergency">Urgent Technical Assistance</option>
-          </select>
+            <span>TRANSMIT TO DIESEL HUB DESK</span>
+            <span class="text-sm">→</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Right 1 Col: Operational Info Cards -->
+      <div class="space-y-4">
+        <div class="bg-[#121316] border border-neutral-800 rounded p-5">
+          <div class="text-xs font-mono uppercase text-amber-400 mb-2 font-semibold flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            Direct Inquiries
+          </div>
+          <p class="text-xs text-neutral-400 leading-relaxed">
+            All transmissions feed directly into our live operations queue. For active roadside breakdown assistance, use our priority corridors index.
+          </p>
+          <div class="mt-4 pt-3 border-t border-neutral-800/80 font-mono text-xs space-y-1">
+            <div class="text-neutral-500">CORRIDOR COVERAGE</div>
+            <div class="text-neutral-200">VIC / NSW / SA Heavy Routes</div>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="message">
-            Message <span class="text-amber-500">*</span>
-          </label>
-          <textarea 
-            id="message" 
-            name="message" 
-            rows="4" 
-            required 
-            placeholder="Details of your inquiry, corridor questions, or workshop onboarding request..." 
-            class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 transition resize-y"
-          ></textarea>
+        <div class="bg-[#121316] border border-neutral-800 rounded p-5">
+          <div class="text-xs font-mono uppercase text-neutral-400 mb-2 font-semibold">
+            Workshop Owners
+          </div>
+          <p class="text-xs text-neutral-400 leading-relaxed">
+            Want to update your drive-through bay clearance, 24/7 callout numbers, or NHVR credentials?
+          </p>
+          <a href="/login" class="inline-block mt-3 text-xs font-mono text-amber-400 hover:underline">
+            Go to Workshop Portal &rarr;
+          </a>
         </div>
-
-        <div id="formStatus" class="hidden text-xs font-mono p-3 rounded"></div>
-
-        <button 
-          type="submit" 
-          id="submitBtn" 
-          class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-black font-mono font-bold uppercase tracking-wider text-xs rounded transition flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <span>Transmit Message to Operations</span>
-          <span>→</span>
-        </button>
-      </form>
+      </div>
     </div>
-  </main>
+  </div>
 
   <script is:inline>
     const form = document.getElementById('contactForm');
@@ -145,7 +165,7 @@ export const prerender = false;
       e.preventDefault();
       statusDiv.className = 'hidden';
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Transmitting...';
+      submitBtn.textContent = 'TRANSMITTING...';
 
       const payload = {
         name: form.name.value,
@@ -167,18 +187,17 @@ export const prerender = false;
         if (res.ok && data.success) {
           form.reset();
           statusDiv.className = 'block text-xs font-mono p-3 rounded bg-emerald-950/60 border border-emerald-800 text-emerald-300';
-          statusDiv.textContent = '✓ Message received. Our operations desk will review and contact you shortly.';
+          statusDiv.textContent = '✓ Transmitted. Operations desk will review and reply via email or phone.';
         } else {
           throw new Error(data.error || 'Failed to submit inquiry');
         }
       } catch (err) {
         statusDiv.className = 'block text-xs font-mono p-3 rounded bg-red-950/60 border border-red-800 text-red-300';
-        statusDiv.textContent = '✕ Error: ' + err.message;
+        statusDiv.textContent = '✕ Transmission Error: ' + err.message;
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Transmit Message to Operations &rarr;';
+        submitBtn.innerHTML = '<span>TRANSMIT TO DIESEL HUB DESK</span> <span>&rarr;</span>';
       }
     });
   </script>
-</body>
-</html>
+</Layout>
