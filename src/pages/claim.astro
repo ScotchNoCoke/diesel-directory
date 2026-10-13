@@ -1,53 +1,58 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import { env } from 'cloudflare:workers';
+import Layout from "../layouts/Layout.astro";
+import { env } from "cloudflare:workers";
 
 export const prerender = false;
 
 let isValid = false;
 let record: { business_id: string; recipient_email: string } | null = null;
-let errorMsg = '';
+let errorMsg = "";
 let token: string | null = null;
 
-try {
-  const reqUrl = new URL(Astro.request.url);
-  const rawToken = reqUrl.searchParams.get('token');
-  token = rawToken ? rawToken.trim() : null;
+const reqUrl = new URL(Astro.request.url);
+const rawToken = reqUrl.searchParams.get("token");
+token = rawToken ? rawToken.trim() : null;
 
-  const db = (env as any)?.DB;
+const businessQuery = reqUrl.searchParams.get("business")?.trim() || "";
+const suburbQuery = reqUrl.searchParams.get("suburb")?.trim() || "";
+const requestedEmail = reqUrl.searchParams.get("requested_for") || "";
+const domainError = reqUrl.searchParams.get("domain_error") || "";
 
-  if (!token) {
-    errorMsg = 'Missing verification token in claim link.';
-  } else if (!db) {
-    errorMsg = 'Database connection error: DB binding not found.';
+const db = (env as any)?.DB;
+
+if (token) {
+  if (!db) {
+    errorMsg = "Database connection error: DB binding not found.";
   } else {
-    const result = (await db
-      .prepare(
-        "SELECT business_id, recipient_email FROM claim_tokens WHERE token = ? AND claimed_at IS NULL AND expires_at > CAST(strftime('%s', 'now') AS INTEGER)"
-      )
-      .bind(token)
-      .first()) as { business_id: string; recipient_email: string } | null;
-
-    if (result) {
-      isValid = true;
-      record = result;
-    } else {
-      const exists = (await db
-        .prepare('SELECT claimed_at, expires_at FROM claim_tokens WHERE token = ?')
+    try {
+      const result = (await db
+        .prepare(
+          "SELECT business_id, recipient_email FROM claim_tokens WHERE token = ? AND claimed_at IS NULL AND expires_at > CAST(strftime('%s', 'now') AS INTEGER)"
+        )
         .bind(token)
-        .first()) as { claimed_at: number | null; expires_at: number } | null;
+        .first()) as { business_id: string; recipient_email: string } | null;
 
-      if (!exists) {
-        errorMsg = 'This verification token was not found or has been revoked.';
-      } else if (exists.claimed_at) {
-        errorMsg = 'This workshop listing has already been claimed.';
+      if (result) {
+        isValid = true;
+        record = result;
       } else {
-        errorMsg = 'This verification link has expired (14-day limit).';
+        const exists = (await db
+          .prepare("SELECT claimed_at, expires_at FROM claim_tokens WHERE token = ?")
+          .bind(token)
+          .first()) as { claimed_at: number | null; expires_at: number } | null;
+
+        if (!exists) {
+          errorMsg = "This verification token was not found or has been revoked.";
+        } else if (exists.claimed_at) {
+          errorMsg = "This workshop listing has already been claimed.";
+        } else {
+          errorMsg = "This verification link has expired (14-day limit).";
+        }
       }
+    } catch (err: any) {
+      errorMsg = `Server execution error: ${err?.message || err}`;
     }
   }
-} catch (err: any) {
-  errorMsg = `Server execution error: ${err?.message || err}`;
 }
 ---
 
@@ -59,15 +64,15 @@ try {
       {isValid && record ? (
         <div class="space-y-6">
           <div class="space-y-2">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               Verification Active
             </span>
             <h1 class="text-3xl font-extrabold tracking-tight text-white">
               Claim Your Profile
             </h1>
             <p class="text-sm text-slate-400">
-              You are claiming management access for:
+              You are verifying management ownership for:
             </p>
             <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg text-sm font-mono text-amber-300 break-all">
               {record.recipient_email}
@@ -90,7 +95,7 @@ try {
                 class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition text-sm"
               />
               <p class="text-xs text-slate-500 mt-1.5">
-                This password will let you edit your opening hours, heavy vehicle capabilities, and contact info.
+                This password will grant you access to edit opening hours, heavy vehicle capabilities, and contact lines.
               </p>
             </div>
 
@@ -101,6 +106,93 @@ try {
               Verify Listing & Take Ownership &rarr;
             </button>
           </form>
+        </div>
+      ) : requestedEmail ? (
+        <div class="text-center space-y-6 py-4">
+          <div class="w-14 h-14 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-2xl font-bold">
+            ✓
+          </div>
+          <div class="space-y-2">
+            <h1 class="text-2xl font-bold text-white tracking-tight">
+              Verification Link Sent
+            </h1>
+            <p class="text-sm text-slate-400 max-w-sm mx-auto">
+              We have dispatched a secure verification link to <span class="text-amber-400 font-mono">{requestedEmail}</span>.
+            </p>
+            <p class="text-xs text-slate-500 max-w-xs mx-auto">
+              Please check your inbox and junk/spam folder and follow the link to claim your workshop listing.
+            </p>
+          </div>
+          <div class="pt-2">
+            <a
+              href="/"
+              class="inline-flex items-center justify-center font-semibold text-sm px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition duration-150"
+            >
+              &larr; Return to Directory
+            </a>
+          </div>
+        </div>
+      ) : businessQuery ? (
+        <div class="space-y-6">
+          <div class="space-y-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Workshop Verification
+            </span>
+            <h1 class="text-3xl font-extrabold tracking-tight text-white">
+              Claim This Listing
+            </h1>
+            <p class="text-sm text-slate-400">
+              Are you the owner or manager of this workshop? Enter your authorized business email below.
+            </p>
+            <div class="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
+              <div class="text-sm font-bold text-white">{businessQuery}</div>
+              {suburbQuery && <div class="text-xs text-slate-400 uppercase tracking-wide">{suburbQuery}</div>}
+            </div>
+          </div>
+
+          {domainError && (
+            <div class="p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 space-y-1">
+              <div class="font-semibold">Corporate Domain Required</div>
+              <div class="text-xs text-slate-300">
+                To prevent unauthorized takeovers, this workshop must be claimed using an official email ending in <strong class="text-amber-400 font-mono">@{domainError}</strong>.
+              </div>
+            </div>
+          )}
+
+          <form method="POST" action="/api/claim/request" class="space-y-5">
+            <input type="hidden" name="business" value={businessQuery} />
+            <input type="hidden" name="suburb" value={suburbQuery} />
+            
+            <div>
+              <label for="email" class="block text-sm font-medium text-slate-300 mb-1.5">
+                Authorized Business Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                name="email"
+                required
+                placeholder="service@workshop.com.au"
+                class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition text-sm"
+              />
+              <p class="text-xs text-slate-500 mt-1.5">
+                A verification link will only be sent to authorized workshop representatives.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              class="w-full inline-flex items-center justify-center font-semibold text-sm px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 transition duration-150 shadow-lg shadow-amber-500/20 cursor-pointer"
+            >
+              Send Secure Claim Link &rarr;
+            </button>
+          </form>
+
+          <div class="text-center pt-2">
+            <a href="/" class="text-xs text-slate-500 hover:text-slate-400 transition">
+              &larr; Back to Directory
+            </a>
+          </div>
         </div>
       ) : (
         <div class="text-center space-y-6 py-4">
@@ -113,7 +205,7 @@ try {
               Claim Verification Notice
             </h1>
             <p class="text-sm text-slate-400 max-w-sm mx-auto">
-              {errorMsg}
+              {errorMsg || "Missing verification token or workshop parameters in link."}
             </p>
           </div>
 
