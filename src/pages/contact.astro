@@ -1,0 +1,184 @@
+---
+export const prerender = false;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="bg-[#0b0c10] text-[#e0e2ec]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact Admin & Operations | Diesel Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-[#0a0a0c] text-neutral-200 antialiased font-sans">
+  <!-- Minimal Top Header -->
+  <header class="border-b border-neutral-800 bg-[#121316] px-6 py-4 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-3 hover:opacity-90 transition">
+      <div class="h-8 w-8 bg-amber-500 rounded flex items-center justify-center font-black text-black text-sm tracking-tighter">DH</div>
+      <div>
+        <span class="text-sm font-mono font-bold tracking-wider uppercase text-white block">Diesel Hub</span>
+        <span class="text-[10px] text-neutral-400 font-mono uppercase block -mt-1">Heavy Transport Index</span>
+      </div>
+    </a>
+    <div class="flex items-center gap-4 text-xs font-mono">
+      <a href="/" class="text-neutral-400 hover:text-white transition">← Back to Directory</a>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-6 py-12">
+    <div class="border-l-4 border-amber-500 pl-4 mb-8">
+      <span class="text-xs font-mono uppercase text-amber-400 tracking-wider font-semibold">Inquiries & Operations</span>
+      <h1 class="text-3xl font-bold tracking-tight text-white mt-1">Contact Diesel Hub</h1>
+      <p class="text-sm text-neutral-400 mt-2 leading-relaxed">
+        Speak with our operations team regarding fleet contracts, verified workshop listings, corridor partnerships, or technical support.
+      </p>
+    </div>
+
+    <div class="bg-[#111215] border border-neutral-800 rounded-lg p-6 sm:p-8 shadow-xl">
+      <form id="contactForm" class="space-y-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="name">
+              Full Name <span class="text-amber-500">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="name" 
+              name="name" 
+              required 
+              placeholder="e.g. John Henderson" 
+              class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 transition"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="company_name">
+              Fleet / Business Name
+            </label>
+            <input 
+              type="text" 
+              id="company_name" 
+              name="company_name" 
+              placeholder="e.g. Pacific Linehaul Transport" 
+              class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 transition"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="email">
+              Email Address <span class="text-amber-500">*</span>
+            </label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              required 
+              placeholder="contact@company.com.au" 
+              class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 transition"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="phone">
+              Direct Phone Number
+            </label>
+            <input 
+              type="tel" 
+              id="phone" 
+              name="phone" 
+              placeholder="0412 345 678" 
+              class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 transition"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="category">
+            Nature of Inquiry <span class="text-amber-500">*</span>
+          </label>
+          <select 
+            id="category" 
+            name="category" 
+            class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition font-sans"
+          >
+            <option value="general">General Operations / Feedback</option>
+            <option value="claim_inquiry">Workshop Listing & Claim Inquiry</option>
+            <option value="quote_callout">Fleet Partnership / Volume Linehaul Service</option>
+            <option value="emergency">Urgent Technical Assistance</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono uppercase tracking-wider text-neutral-400 mb-1.5" for="message">
+            Message <span class="text-amber-500">*</span>
+          </label>
+          <textarea 
+            id="message" 
+            name="message" 
+            rows="4" 
+            required 
+            placeholder="Details of your inquiry, corridor questions, or workshop onboarding request..." 
+            class="w-full bg-[#181a1f] border border-neutral-700 rounded px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500 transition resize-y"
+          ></textarea>
+        </div>
+
+        <div id="formStatus" class="hidden text-xs font-mono p-3 rounded"></div>
+
+        <button 
+          type="submit" 
+          id="submitBtn" 
+          class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-black font-mono font-bold uppercase tracking-wider text-xs rounded transition flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <span>Transmit Message to Operations</span>
+          <span>→</span>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <script is:inline>
+    const form = document.getElementById('contactForm');
+    const statusDiv = document.getElementById('formStatus');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusDiv.className = 'hidden';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Transmitting...';
+
+      const payload = {
+        name: form.name.value,
+        company_name: form.company_name.value,
+        email: form.email.value,
+        phone: form.phone.value,
+        category: form.category.value,
+        message: form.message.value
+      };
+
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          form.reset();
+          statusDiv.className = 'block text-xs font-mono p-3 rounded bg-emerald-950/60 border border-emerald-800 text-emerald-300';
+          statusDiv.textContent = '✓ Message received. Our operations desk will review and contact you shortly.';
+        } else {
+          throw new Error(data.error || 'Failed to submit inquiry');
+        }
+      } catch (err) {
+        statusDiv.className = 'block text-xs font-mono p-3 rounded bg-red-950/60 border border-red-800 text-red-300';
+        statusDiv.textContent = '✕ Error: ' + err.message;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Transmit Message to Operations &rarr;';
+      }
+    });
+  </script>
+</body>
+</html>
