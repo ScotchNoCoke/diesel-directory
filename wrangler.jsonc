@@ -10,5 +10,12 @@
 	},
 	"observability": {
 		"enabled": true
-	}
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "diesel-directory",
+			"database_id": "9b4abe65-ea60-4dbb-a0c2-3a454e7d8c32"
+		}
+	]
 }

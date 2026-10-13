@@ -1,56 +1,49 @@
 ---
-export const prerender = true;
 import Layout from '../../../layouts/Layout.astro';
 import directoryData from '../../../data/suburbs.json';
 
+export const prerender = true;
+
 export async function getStaticPaths() {
-  const corridors = [...new Set(directoryData.flatMap(item => item.corridors || []))].filter(Boolean);
-  return corridors.map(corridor => ({
-    params: { corridor: corridor.toLowerCase().replace(/\s+/g, '-') },
-    props: {
-      corridorName: corridor,
-      listings: directoryData.filter(item => (item.corridors || []).includes(corridor))
-    }
-  }));
+  const corridors = [...new Set(directoryData.map((item: any) => item.corridor))].filter(Boolean);
+
+  return corridors.map((corridor) => {
+    const slug = (corridor as string).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const matchedSuburbs = directoryData.filter((item: any) => item.corridor === corridor);
+    return {
+      params: { corridor: slug },
+      props: {
+        corridorTitle: corridor,
+        suburbs: matchedSuburbs,
+      },
+    };
+  });
 }
 
-const { corridorName, listings } = Astro.props;
+const { corridorTitle, suburbs } = Astro.props;
 ---
 
-<Layout
-  title={`${corridorName} Heavy Vehicle Repair & Diesel Mechanics | DieselHub`}
-  description={`Find heavy vehicle breakdown services, 24/7 mobile callouts, and workshop bays along the ${corridorName} freight corridor.`}
->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-    <div class="border-b border-zinc-800 pb-6">
-      <span class="text-xs font-mono text-amber-500 uppercase tracking-widest">Freight Corridor Index</span>
-      <h1 class="text-3xl font-black font-mono tracking-tight text-slate-100 mt-1">
-        {corridorName} <span class="text-amber-500">Service Coverage</span>
-      </h1>
-      <p class="text-sm text-slate-400 mt-2 font-sans">
-        Showing verified heavy vehicle repairers and mobile mechanics along this transit route.
-      </p>
+<Layout title={`${corridorTitle} | Diesel Hub Freight Corridors`}>
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-8">
+      <span class="text-xs font-semibold uppercase tracking-wider text-amber-500">Freight Corridor</span>
+      <h1 class="text-3xl font-extrabold text-white mt-1">{corridorTitle}</h1>
+      <p class="text-slate-400 mt-2">Specialist heavy vehicle diesel repair centers servicing this transport route.</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {listings.map((item) => (
-        <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3 font-sans">
-          <div class="flex justify-between items-start gap-2">
-            <h2 class="text-lg font-bold text-slate-100">{item.name}</h2>
-            {item.suburb && (
-              <span class="text-xs font-mono px-2 py-0.5 rounded bg-zinc-800 text-amber-400 shrink-0">
-                {item.suburb}
-              </span>
-            )}
-          </div>
-          <p class="text-xs text-slate-400">{item.address || `${item.suburb}, ${item.state}`}</p>
-          {item.phone && (
-            <a href={`tel:${item.phone}`} class="inline-block text-xs font-mono font-bold text-amber-400 hover:text-amber-300">
-              📞 {item.phone}
+      {suburbs.map((suburb: any) => (
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition">
+          <h2 class="text-lg font-bold text-slate-100 capitalize">{suburb.suburb}, {suburb.state?.toUpperCase()}</h2>
+          <p class="text-xs text-slate-400 mt-1">{suburb.localOverview}</p>
+          <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs">
+            <span class="text-slate-500 font-mono">Postcode {suburb.postcode}</span>
+            <a href={`/${suburb.state?.toLowerCase()}/${suburb.suburb?.toLowerCase()}`} class="text-amber-400 hover:text-amber-300 font-medium">
+              View Workshops &rarr;
             </a>
-          )}
+          </div>
         </div>
       ))}
     </div>
-  </div>
+  </main>
 </Layout>

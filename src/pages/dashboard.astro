@@ -1,0 +1,236 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { env } from 'cloudflare:workers';
+import { getSession } from '../lib/auth';
+
+export const prerender = false;
+
+let db: any = null;
+let sessionKv: any = null;
+let session: any = null;
+let profile: any = null;
+
+try {
+  db = (env as any)?.DB;
+  sessionKv = (env as any)?.SESSION;
+
+  const cookieHeader = Astro.request.headers.get('Cookie') || '';
+  const sessionMatch = cookieHeader.match(/dh_session=([^;]+)/);
+  const sessionId = sessionMatch ? sessionMatch[1] : null;
+
+  session = sessionId && sessionKv ? await getSession(sessionKv, sessionId) : null;
+} catch (err) {
+  console.error('Dashboard session error:', err);
+}
+
+if (!session) {
+  return Astro.redirect('/?auth=required');
+}
+
+if (db) {
+  try {
+    profile = await db
+      .prepare('SELECT * FROM workshop_profiles WHERE business_id = ?')
+      .bind(session.businessId)
+      .first();
+  } catch (e) {
+    console.error('Error fetching workshop profile:', e);
+  }
+}
+
+const savedMessage = Astro.url.searchParams.get('saved') === '1';
+---
+
+<Layout title="Workshop Owner Dashboard | Diesel Hub Australia">
+  <main class="min-h-screen bg-slate-950 text-slate-100 py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto space-y-8">
+      
+      <!-- Top Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Verified Workshop
+            </span>
+            <span class="text-xs font-mono text-slate-500">ID: {session.businessId}</span>
+          </div>
+          <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">
+            Workshop Management
+          </h1>
+          <p class="text-sm text-slate-400">
+            Logged in as <span class="text-amber-400 font-mono">{session.email}</span>
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <a
+            href="/"
+            class="px-4 py-2 rounded-xl text-sm font-medium bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition"
+          >
+            Public Directory
+          </a>
+          <form method="POST" action="/api/auth/logout">
+            <button
+              type="submit"
+              class="px-4 py-2 rounded-xl text-sm font-semibold bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition cursor-pointer"
+            >
+              Sign Out
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {savedMessage && (
+        <div class="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm flex items-center justify-between">
+          <span>Profile changes updated successfully.</span>
+        </div>
+      )}
+
+      <!-- Workshop Update Form -->
+      <form method="POST" action="/api/dashboard/update" class="space-y-8">
+        
+        <!-- Contact & Operations Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <span>Workshop Details & Contact Lines</span>
+          </h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Trade / Trading Name</label>
+              <input
+                type="text"
+                name="name"
+                value={profile?.name || ''}
+                placeholder="e.g. Western Corridor Diesel Repairs"
+                class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Primary Workshop Phone</label>
+              <input
+                type="text"
+                name="phone"
+                value={profile?.phone || ''}
+                placeholder="e.g. 03 9000 0000"
+                class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">24/7 Breakdown Dispatch Line</label>
+              <input
+                type="text"
+                name="after_hours_phone"
+                value={profile?.after_hours_phone || ''}
+                placeholder="e.g. 0400 123 456"
+                class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Workshop Yard Address</label>
+              <input
+                type="text"
+                name="address"
+                value={profile?.address || ''}
+                placeholder="e.g. 14 Logistics Drive, Truganina VIC 3029"
+                class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Heavy Vehicle Capabilities -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+          <h2 class="text-xl font-bold text-white">Capabilities & Heavy Vehicle Equipment</h2>
+          <p class="text-sm text-slate-400">These badges will be highlighted on your corridor & suburb listing cards.</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label class="flex items-start gap-3 p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
+              <input
+                type="checkbox"
+                name="is_24_7"
+                value="1"
+                checked={Boolean(profile?.is_24_7)}
+                class="mt-1 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-900"
+              />
+              <div>
+                <span class="text-sm font-semibold text-white block">24/7 Emergency Breakdown</span>
+                <span class="text-xs text-slate-400 block mt-0.5">Available for highway callouts & roadside assistance</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-3 p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
+              <input
+                type="checkbox"
+                name="has_mobile_service"
+                value="1"
+                checked={Boolean(profile?.has_mobile_service)}
+                class="mt-1 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-900"
+              />
+              <div>
+                <span class="text-sm font-semibold text-white block">Mobile Field Mechanics</span>
+                <span class="text-xs text-slate-400 block mt-0.5">Fully-equipped mobile service trucks for on-site repairs</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-3 p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
+              <input
+                type="checkbox"
+                name="has_b_double_access"
+                value="1"
+                checked={Boolean(profile?.has_b_double_access)}
+                class="mt-1 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-900"
+              />
+              <div>
+                <span class="text-sm font-semibold text-white block">B-Double & Road Train Turnaround</span>
+                <span class="text-xs text-slate-400 block mt-0.5">Direct heavy vehicle parking & unhook facilities in yard</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-3 p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
+              <input
+                type="checkbox"
+                name="has_rwc"
+                value="1"
+                checked={Boolean(profile?.has_rwc)}
+                class="mt-1 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-900"
+              />
+              <div>
+                <span class="text-sm font-semibold text-white block">Licensed Heavy Vehicle RWC</span>
+                <span class="text-xs text-slate-400 block mt-0.5">Accredited roadworthy tester for trucks & trailers</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-3 p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition sm:col-span-2">
+              <input
+                type="checkbox"
+                name="has_dpf_service"
+                value="1"
+                checked={Boolean(profile?.has_dpf_service)}
+                class="mt-1 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-900"
+              />
+              <div>
+                <span class="text-sm font-semibold text-white block">DPF / SCR & Emissions Diagnostics</span>
+                <span class="text-xs text-slate-400 block mt-0.5">OEM-level diagnostic tooling, DPF baking, and AdBlue fault rectification</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-end">
+          <button
+            type="submit"
+            class="px-8 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition cursor-pointer"
+          >
+            Save Workshop Profile &rarr;
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </main>
+</Layout>

@@ -1,246 +1,132 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+let isValid = false;
+let record: { business_id: string; recipient_email: string } | null = null;
+let errorMsg = '';
+let token: string | null = null;
+
+try {
+  const reqUrl = new URL(Astro.request.url);
+  const rawToken = reqUrl.searchParams.get('token');
+  token = rawToken ? rawToken.trim() : null;
+
+  const db = (env as any)?.DB;
+
+  if (!token) {
+    errorMsg = 'Missing verification token in claim link.';
+  } else if (!db) {
+    errorMsg = 'Database connection error: DB binding not found.';
+  } else {
+    const result = (await db
+      .prepare(
+        "SELECT business_id, recipient_email FROM claim_tokens WHERE token = ? AND claimed_at IS NULL AND expires_at > CAST(strftime('%s', 'now') AS INTEGER)"
+      )
+      .bind(token)
+      .first()) as { business_id: string; recipient_email: string } | null;
+
+    if (result) {
+      isValid = true;
+      record = result;
+    } else {
+      const exists = (await db
+        .prepare('SELECT claimed_at, expires_at FROM claim_tokens WHERE token = ?')
+        .bind(token)
+        .first()) as { claimed_at: number | null; expires_at: number } | null;
+
+      if (!exists) {
+        errorMsg = 'This verification token was not found or has been revoked.';
+      } else if (exists.claimed_at) {
+        errorMsg = 'This workshop listing has already been claimed.';
+      } else {
+        errorMsg = 'This verification link has expired (14-day limit).';
+      }
+    }
+  }
+} catch (err: any) {
+  errorMsg = `Server execution error: ${err?.message || err}`;
+}
 ---
 
-<Layout
-  title="Claim & Verify Business Listing | DieselHub"
-  description="Verify management and dispatch access for heavy vehicle repair facilities across Australian linehaul corridors."
->
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10">
-    
-    <div class="space-y-3 border-b border-zinc-800 pb-6">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-zinc-900 border border-zinc-800 text-xs font-mono text-amber-500 uppercase tracking-widest">
-        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-        Workshop Operator Verification
-      </div>
-      <h1 class="text-2xl sm:text-4xl font-black font-mono tracking-tight text-slate-100">
-        Claim Your <span class="text-amber-500">Workshop Listing</span>
-      </h1>
-      <p class="text-sm text-slate-400 font-sans leading-relaxed">
-        Verify your facility's NHVR combination access clearance (26m B-Double, 36m Road Train) and mobile 24/7 callout credentials to receive the <strong class="text-slate-200">Verified by Operator</strong> badge on the statewide freight corridor network.
-      </p>
-    </div>
+<Layout title="Claim Workshop Listing | Diesel Hub Australia">
+  <main class="min-h-[75vh] flex items-center justify-center py-16 px-4 sm:px-6 lg:px-8 bg-slate-950 text-slate-100">
+    <div class="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 sm:p-10 relative overflow-hidden">
+      <div class="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-    <form id="claim-form" class="space-y-6 font-mono text-xs">
-      
-      <div class="bg-zinc-900/60 border border-zinc-800 p-5 rounded-lg space-y-4">
-        <span class="text-xs text-amber-500 font-bold uppercase tracking-wider block">1. Business to Claim</span>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="space-y-1.5">
-            <label for="businessName" class="text-slate-300 block">Trading Name / Listing Name *</label>
-            <input
-              type="text"
-              id="businessName"
-              name="businessName"
-              required
-              placeholder="e.g. Daimler Trucks Laverton"
-              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
-            />
+      {isValid && record ? (
+        <div class="space-y-6">
+          <div class="space-y-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+              Verification Active
+            </span>
+            <h1 class="text-3xl font-extrabold tracking-tight text-white">
+              Claim Your Profile
+            </h1>
+            <p class="text-sm text-slate-400">
+              You are claiming management access for:
+            </p>
+            <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg text-sm font-mono text-amber-300 break-all">
+              {record.recipient_email}
+            </div>
           </div>
 
-          <div class="space-y-1.5">
-            <label for="suburb" class="text-slate-300 block">Hub Suburb / Depot Location *</label>
-            <input
-              type="text"
-              id="suburb"
-              name="suburb"
-              required
-              placeholder="e.g. Truganina"
-              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
-            />
-          </div>
-        </div>
-      </div>
+          <form method="POST" action="/api/claim/complete" class="space-y-5">
+            <input type="hidden" name="token" value={token} />
+            <div>
+              <label for="password" class="block text-sm font-medium text-slate-300 mb-1.5">
+                Create Account Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                name="password"
+                required
+                minlength="8"
+                placeholder="At least 8 characters"
+                class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition text-sm"
+              />
+              <p class="text-xs text-slate-500 mt-1.5">
+                This password will let you edit your opening hours, heavy vehicle capabilities, and contact info.
+              </p>
+            </div>
 
-      <div class="bg-zinc-900/60 border border-zinc-800 p-5 rounded-lg space-y-4">
-        <span class="text-xs text-amber-500 font-bold uppercase tracking-wider block">2. Management Credentials</span>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="space-y-1.5">
-            <label for="contactName" class="text-slate-300 block">Contact Full Name *</label>
-            <input
-              type="text"
-              id="contactName"
-              name="contactName"
-              required
-              placeholder="e.g. John Doe"
-              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
-            />
-          </div>
-
-          <div class="space-y-1.5">
-            <label for="role" class="text-slate-300 block">Role / Position *</label>
-            <select
-              id="role"
-              name="role"
-              required
-              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
+            <button
+              type="submit"
+              class="w-full inline-flex items-center justify-center font-semibold text-sm px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 transition duration-150 shadow-lg shadow-amber-500/20 cursor-pointer"
             >
-              <option value="Workshop Manager">Workshop Manager / Service Foreman</option>
-              <option value="Business Owner / Director">Business Owner / Director</option>
-              <option value="Fleet Dispatch Controller">Fleet Dispatch Controller</option>
-              <option value="Other">Authorised Representative</option>
-            </select>
+              Verify Listing & Take Ownership &rarr;
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div class="text-center space-y-6 py-4">
+          <div class="w-14 h-14 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 text-2xl font-bold">
+            !
           </div>
 
-          <div class="space-y-1.5">
-            <label for="email" class="text-slate-300 block">Business Email *</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              placeholder="service@yourdealership.com.au"
-              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
-            />
+          <div class="space-y-2">
+            <h1 class="text-2xl font-bold text-white tracking-tight">
+              Claim Verification Notice
+            </h1>
+            <p class="text-sm text-slate-400 max-w-sm mx-auto">
+              {errorMsg}
+            </p>
           </div>
 
-          <div class="space-y-1.5">
-            <label for="phone" class="text-slate-300 block">Direct Contact Number *</label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              required
-              placeholder="0400 000 000"
-              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
-            />
-          </div>
-
-          <div class="space-y-1.5 sm:col-span-2">
-            <label for="abn" class="text-slate-300 block">Australian Business Number (ABN) *</label>
-            <input
-              type="text"
-              id="abn"
-              name="abn"
-              required
-              placeholder="11-digit ABN for business verification"
-              class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
-            />
+          <div class="pt-2">
+            <a
+              href="/"
+              class="inline-flex items-center justify-center font-semibold text-sm px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition duration-150"
+            >
+              &larr; Return to Diesel Hub Directory
+            </a>
           </div>
         </div>
-      </div>
-
-      <div class="bg-zinc-900/60 border border-zinc-800 p-5 rounded-lg space-y-4">
-        <span class="text-xs text-amber-500 font-bold uppercase tracking-wider block">3. Heavy Vehicle Capabilities &amp; Access</span>
-        <p class="text-[11px] text-slate-400 font-sans">Confirm physical combination access and emergency capabilities:</p>
-        
-        <div class="space-y-2 pt-1 font-sans text-xs">
-          <label class="flex items-start gap-2.5 cursor-pointer text-slate-200">
-            <input type="checkbox" name="bDoubleAccess" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
-            <span><strong>26m B-Double Gazetted Access:</strong> Facility has legal NHVR road access and turning clearance.</span>
-          </label>
-
-          <label class="flex items-start gap-2.5 cursor-pointer text-slate-200">
-            <input type="checkbox" name="roadTrainAccess" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
-            <span><strong>36m Road Train / A-Double Access:</strong> Site accommodates multi-combination staging / uncoupling.</span>
-          </label>
-
-          <label class="flex items-start gap-2.5 cursor-pointer text-slate-200">
-            <input type="checkbox" name="driveThroughBays" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
-            <span><strong>Drive-Through Service Bays:</strong> High-clearance drive-through bays available.</span>
-          </label>
-
-          <label class="flex items-start gap-2.5 cursor-pointer text-slate-200">
-            <input type="checkbox" name="afterHoursDispatch" class="mt-0.5 rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0" />
-            <span><strong>24/7 Mobile Linehaul Response:</strong> Dedicated breakdown service vehicle available for roadside callouts.</span>
-          </label>
-        </div>
-
-        <div class="space-y-1.5 pt-3 border-t border-zinc-800">
-          <label for="notes" class="text-slate-300 block">Listing Updates / Corrections (Optional)</label>
-          <textarea
-            id="notes"
-            name="notes"
-            rows="3"
-            placeholder="Provide updated dispatch telephone numbers, after-hours emergency lines, or OEM diagnostic specialisations..."
-            class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
-          ></textarea>
-        </div>
-      </div>
-
-      <div class="space-y-3 pt-2">
-        <button
-          type="submit"
-          id="submit-btn"
-          class="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-sm py-3.5 px-4 rounded transition-colors shadow-lg shadow-amber-500/10 cursor-pointer"
-        >
-          Submit Listing Claim for Verification
-        </button>
-        <div id="status-msg" class="hidden p-4 rounded text-xs font-mono"></div>
-      </div>
-    </form>
-  </div>
+      )}
+    </div>
+  </main>
 </Layout>
-
-<script>
-  const params = new URLSearchParams(window.location.search);
-  const bizParam = params.get('business');
-  const subParam = params.get('suburb');
-
-  if (bizParam) {
-    const bizInput = document.getElementById('businessName') as HTMLInputElement;
-    if (bizInput) bizInput.value = bizParam;
-  }
-  if (subParam) {
-    const subInput = document.getElementById('suburb') as HTMLInputElement;
-    if (subInput) subInput.value = subParam;
-  }
-
-  const form = document.getElementById('claim-form') as HTMLFormElement;
-  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
-  const statusMsg = document.getElementById('status-msg') as HTMLDivElement;
-
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!submitBtn || !statusMsg) return;
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting Verification...';
-    statusMsg.className = 'hidden';
-
-    const formData = new FormData(form);
-    const payload: Record<string, any> = Object.fromEntries(formData.entries());
-
-    payload.bDoubleAccess = formData.has('bDoubleAccess');
-    payload.roadTrainAccess = formData.has('roadTrainAccess');
-    payload.driveThroughBays = formData.has('driveThroughBays');
-    payload.afterHoursDispatch = formData.has('afterHoursDispatch');
-
-    try {
-      const res = await fetch('/api/claim-listing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const text = await res.text();
-      let result: any = null;
-      try {
-        result = text ? JSON.parse(text) : null;
-      } catch {
-        throw new Error(`Server returned HTTP ${res.status}: ${text.slice(0, 100) || 'Empty body'}`);
-      }
-
-      if (!res.ok || !result) {
-        throw new Error(result?.error || `Server returned HTTP ${res.status}`);
-      }
-
-      if (result.status === 'verified') {
-        statusMsg.className = 'p-4 rounded text-xs font-mono bg-emerald-950/80 border border-emerald-500/60 text-emerald-300 block';
-        statusMsg.textContent = `✓ ${result.message}`;
-        submitBtn.textContent = 'Domain Verified';
-      } else {
-        statusMsg.className = 'p-4 rounded text-xs font-mono bg-amber-950/80 border border-amber-500/60 text-amber-300 block';
-        statusMsg.textContent = `✓ ${result.message}`;
-        submitBtn.textContent = 'Claim Queued for Review';
-      }
-    } catch (err: any) {
-      statusMsg.className = 'p-4 rounded text-xs font-mono bg-red-950/80 border border-red-500/60 text-red-300 block';
-      statusMsg.textContent = `✗ ${err.message || 'An error occurred while submitting verification.'}`;
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Retry Submission';
-    }
-  });
-</script>
