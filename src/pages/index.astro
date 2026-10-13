@@ -1,4 +1,22 @@
 ---
+import { env } from "cloudflare:workers";
+
+// Fetch live workshop overrides from D1
+const db = (env as any)?.DB;
+const claimedProfilesMap = new Map();
+
+if (db) {
+  try {
+    const { results } = await db.prepare(
+      "SELECT business_id, phone, emergency_phone, is_open_now, b_double_access, road_train_access, drive_through_bays, rwc_licensed FROM workshop_profiles"
+    ).all();
+    for (const row of results || []) {
+      claimedProfilesMap.set(row.business_id, row);
+    }
+  } catch (err) {
+    console.error("Failed to query workshop_profiles overlay:", err);
+  }
+}
 import Layout from '../layouts/Layout.astro';
 import suburbs from '../data/suburbs.json';
 
@@ -208,7 +226,7 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                     </div>
                     <div class="pt-2 border-t border-zinc-900 flex items-center justify-between gap-2">
                     <a
-                      href={`tel:${biz.phone.replace(/[^0-9+]/g, '')}`}
+                      href={`tel:${(claimedProfilesMap.get(biz.slug)?.emergency_phone || claimedProfilesMap.get(biz.slug)?.phone || biz.phone).replace(/[^0-9+]/g, "")}`}
                       class="flex-1 inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-xs py-2 px-3 rounded transition-colors"
                     >
                       <span>📞</span> {biz.phone}
@@ -294,7 +312,7 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                     </div>
                     <div class="pt-2 border-t border-zinc-900 flex items-center justify-between gap-2">
                       <a
-                        href={`tel:${biz.phone.replace(/[^0-9+]/g, '')}`}
+                        href={`tel:${(claimedProfilesMap.get(biz.slug)?.emergency_phone || claimedProfilesMap.get(biz.slug)?.phone || biz.phone).replace(/[^0-9+]/g, "")}`}
                         class="flex-1 inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-xs py-2 px-3 rounded transition-colors"
                       >
                         <span>📞</span> {biz.phone}
@@ -370,7 +388,7 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                     </div>
                     <div class="pt-2 border-t border-zinc-900 flex items-center justify-between gap-2">
                       <a
-                        href={`tel:${biz.phone.replace(/[^0-9+]/g, '')}`}
+                        href={`tel:${(claimedProfilesMap.get(biz.slug)?.emergency_phone || claimedProfilesMap.get(biz.slug)?.phone || biz.phone).replace(/[^0-9+]/g, "")}`}
                         class="flex-1 inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-xs py-2 px-3 rounded transition-colors"
                       >
                         <span>📞</span> {biz.phone}
