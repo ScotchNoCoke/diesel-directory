@@ -1,0 +1,154 @@
+---
+interface Props {
+  suburbName: string;
+  lat: number;
+  lng: number;
+  workshops: Array<{
+    name: string;
+    phone?: string;
+    address?: string;
+    rating?: number;
+    slug?: string;
+    lat?: number;
+    lng?: number;
+  }>;
+}
+
+const { suburbName, lat, lng, workshops } = Astro.props;
+
+const mappedWorkshops = workshops.map((biz, idx) => {
+  const slug = biz.slug || biz.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const offsetAngle = (idx / (workshops.length || 1)) * 2 * Math.PI;
+  const radius = 0.008 + (idx * 0.003);
+  return {
+    ...biz,
+    slug,
+    bizLat: biz.lat || (lat + Math.sin(offsetAngle) * radius),
+    bizLng: biz.lng || (lng + Math.cos(offsetAngle) * radius),
+  };
+});
+---
+
+<div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
+  <div class="px-5 py-3 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/80">
+    <div class="flex items-center gap-2 text-xs font-mono text-slate-300">
+      <span class="text-amber-500">🗺️</span>
+      <span>{suburbName} Interactive Corridor Map</span>
+      <span class="text-zinc-500 text-[11px] hidden sm:inline">({workshops.length} Active Depots & Mobile Units)</span>
+    </div>
+    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">Turn-by-Turn GPS Active</span>
+  </div>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <div id="suburb-map-canvas" class="w-full h-80 sm:h-96 bg-zinc-950 z-0"></div>
+</div>
+
+<script is:inline define:vars={{ lat, lng, mappedWorkshops }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (typeof L === "undefined") return;
+
+    const map = L.map("suburb-map-canvas", {
+      zoomControl: true,
+      scrollWheelZoom: false,
+    }).setView([lat, lng], 13);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    const markersBySlug = {};
+
+    const createPin = (isActive = false) => {
+      const bg = isActive ? "#fbbf24" : "#f59e0b";
+      const scale = isActive ? "transform: scale(1.2);" : "";
+      return L.divIcon({
+        className: "custom-diesel-pin",
+        html: `
+          <div style="background-color: ${bg}; color: #09090b; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.7); cursor: pointer; transition: transform 0.2s; ${scale}">
+            🔧
+          </div>
+        `,
+        iconSize: [28, 28],
+        iconAnchor: [14, 28],
+        popupAnchor: [0, -28]
+      });
+    };
+
+    mappedWorkshops.forEach((biz) => {
+      const cleanPhone = (biz.phone || "").replace(/[^0-9+]/g, "");
+      const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(biz.address || `${biz.name}, Truganina VIC`)}`;
+
+      const popupHtml = `
+        <div style="font-family: ui-monospace, SFMono-Regular, monospace; color: #18181b; min-width: 200px; padding: 4px;">
+          <h4 style="font-weight: 800; font-size: 13px; margin: 0 0 3px 0; color: #09090b;">${biz.name}</h4>
+          ${biz.address ? `<p style="font-size: 11px; color: #52525b; margin: 0 0 8px 0; line-height: 1.3;">📍 ${biz.address}</p>` : ""}
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
+            ${biz.phone ? `
+              <a href="tel:${cleanPhone}" style="text-align: center; background: #f59e0b; color: #09090b; font-weight: bold; font-size: 11px; padding: 4px 6px; border-radius: 4px; text-decoration: none;">
+                📞 Call
+              </a>
+            ` : ""}
+            <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer" style="text-align: center; background: #27272a; color: #e4e4e7; font-size: 11px; padding: 4px 6px; border-radius: 4px; text-decoration: none; border: 1px solid #3f3f46;">
+              🧭 Directions
+            </a>
+          </div>
+
+          <button 
+            type="button" 
+            class="trigger-dispatch-modal"
+            data-biz-id="${biz.slug}"
+            data-biz-name="${biz.name}"
+            style="width: 100%; background: #09090b; color: #fbbf24; font-size: 11px; font-weight: bold; padding: 5px; border-radius: 4px; border: 1px solid #27272a; cursor: pointer; margin-bottom: 4px;"
+          >
+            ⚡ Quote / Callout
+          </button>
+          
+          <button 
+            type="button" 
+            onclick="document.getElementById('card-${biz.slug}')?.scrollIntoView({ behavior: 'smooth', block: 'center' });"
+            style="width: 100%; background: transparent; border: none; font-size: 10px; color: #71717a; text-decoration: underline; cursor: pointer;"
+          >
+            Jump to Listing Details &darr;
+          </button>
+        </div>
+      `;
+
+      const marker = L.marker([biz.bizLat, biz.bizLng], { icon: createPin(false) })
+        .addTo(map)
+        .bindPopup(popupHtml);
+
+      markersBySlug[biz.slug] = marker;
+
+      // On pin click, highlight card
+      marker.on("click", () => {
+        const card = document.getElementById(`card-${biz.slug}`);
+        if (card) {
+          card.classList.add("ring-2", "ring-amber-400");
+          setTimeout(() => card.classList.remove("ring-2", "ring-amber-400"), 2500);
+        }
+      });
+    });
+
+    // Expose for hover sync from cards
+    window.dieselMapFocus = (slug) => {
+      const marker = markersBySlug[slug];
+      if (marker) {
+        map.panTo(marker.getLatLng(), { animate: true, duration: 0.5 });
+        marker.openPopup();
+      }
+    };
+  });
+</script>
+
+<style is:global>
+  .leaflet-tile-pane {
+    filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+  }
+  .leaflet-container {
+    background: #09090b !important;
+  }
+</style>

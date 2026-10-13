@@ -1,4 +1,5 @@
 ---
+import DispatchInquiryModal from "../components/DispatchInquiryModal.astro";
 import { env } from "cloudflare:workers";
 
 // Fetch live workshop overrides from D1
@@ -231,6 +232,15 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                     >
                       <span>📞</span> {biz.phone}
                     </a>
+                    <button
+                      type="button"
+                      class="trigger-dispatch-modal inline-flex items-center justify-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-zinc-800 font-mono text-xs py-2 px-3 rounded transition-colors cursor-pointer"
+                      data-biz-id={biz.slug}
+                      data-biz-name={biz.name}
+                      title="Request Callout or Quote"
+                    >
+                      ⚡ Quote / Callout
+                    </button>
                     {biz.website && (
                       <a
                         href={biz.website}
@@ -317,6 +327,24 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                       >
                         <span>📞</span> {biz.phone}
                       </a>
+                    <button
+                      type="button"
+                      class="trigger-dispatch-modal inline-flex items-center justify-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-zinc-800 font-mono text-xs py-2 px-3 rounded transition-colors cursor-pointer"
+                      data-biz-id={biz.slug}
+                      data-biz-name={biz.name}
+                      title="Request Callout or Quote"
+                    >
+                      ⚡ Quote / Callout
+                    </button>
+                      <button
+                        type="button"
+                        class="trigger-dispatch-modal inline-flex items-center justify-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-zinc-800 font-mono text-xs py-2 px-3 rounded transition-colors cursor-pointer"
+                        data-biz-id={biz.slug}
+                        data-biz-name={biz.name}
+                        title="Request Callout or Quote"
+                      >
+                        ⚡ Quote / Callout
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -393,6 +421,24 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                       >
                         <span>📞</span> {biz.phone}
                       </a>
+                    <button
+                      type="button"
+                      class="trigger-dispatch-modal inline-flex items-center justify-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-zinc-800 font-mono text-xs py-2 px-3 rounded transition-colors cursor-pointer"
+                      data-biz-id={biz.slug}
+                      data-biz-name={biz.name}
+                      title="Request Callout or Quote"
+                    >
+                      ⚡ Quote / Callout
+                    </button>
+                      <button
+                        type="button"
+                        class="trigger-dispatch-modal inline-flex items-center justify-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-zinc-800 font-mono text-xs py-2 px-3 rounded transition-colors cursor-pointer"
+                        data-biz-id={biz.slug}
+                        data-biz-name={biz.name}
+                        title="Request Callout or Quote"
+                      >
+                        ⚡ Quote / Callout
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -404,6 +450,7 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
     )}
 
   </div>
+  <DispatchInquiryModal />
 </Layout>
 
 <script define:vars={{ suburbs }}>
@@ -494,6 +541,15 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                       >
                         📞 ${biz.phone}
                       </a>
+                    <button
+                      type="button"
+                      class="trigger-dispatch-modal inline-flex items-center justify-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-zinc-800 font-mono text-xs py-2 px-3 rounded transition-colors cursor-pointer"
+                      data-biz-id={biz.slug}
+                      data-biz-name={biz.name}
+                      title="Request Callout or Quote"
+                    >
+                      ⚡ Quote / Callout
+                    </button>
                     </div>
                   `).join("")
                   : `<p class="text-xs text-slate-400">No registered operators directly in this hub. Next closest: <strong class="text-slate-200">${secondNearest?.suburb} (${secondNearest?.distanceKm.toFixed(1)} km)</strong>.</p>`

@@ -1,74 +1,191 @@
 ---
-export const prerender = true;
-import Layout from '../../../layouts/Layout.astro';
-import directoryData from '../../../data/suburbs.json';
+import Layout from "../../../layouts/Layout.astro";
+import DispatchInquiryModal from "../../../components/DispatchInquiryModal.astro";
+import SuburbMap from "../../../components/SuburbMap.astro";
+import rawData from "../../../data/suburbs.json";
+
+const allSuburbs = Array.isArray(rawData) ? rawData : (rawData?.suburbs || rawData?.default || []);
 
 export async function getStaticPaths() {
-  const suburbsMap = new Map();
-
-  directoryData.forEach((item: any) => {
-    if (item.state && item.suburb) {
-      const key = `${item.state.toLowerCase()}/${item.suburb.toLowerCase()}`;
-      if (!suburbsMap.has(key)) {
-        suburbsMap.set(key, {
-          state: item.state.toLowerCase(),
-          suburb: item.suburb.toLowerCase(),
-          stateName: item.state,
-          suburbName: item.suburb,
-          listings: []
-        });
-      }
-      suburbsMap.get(key).listings.push(item);
-    }
-  });
-
-  return Array.from(suburbsMap.values()).map(entry => ({
-    params: { state: entry.state, suburb: entry.suburb },
-    props: {
-      stateName: entry.stateName,
-      suburbName: entry.suburbName,
-      listings: entry.listings
-    }
+  const list = Array.isArray(rawData) ? rawData : (rawData?.suburbs || rawData?.default || []);
+  return list.map((sub: any) => ({
+    params: {
+      state: String(sub.state || "vic").toLowerCase(),
+      suburb: String(sub.slug || sub.suburb || "").toLowerCase(),
+    },
+    props: { suburbData: sub },
   }));
 }
 
-const { stateName, suburbName, listings } = Astro.props;
+const { state, suburb } = Astro.params;
+const suburbData = Astro.props.suburbData || allSuburbs.find(
+  (s: any) =>
+    String(s.state || "").toLowerCase() === String(state).toLowerCase() &&
+    (String(s.slug || "").toLowerCase() === String(suburb).toLowerCase() ||
+     String(s.suburb || "").toLowerCase() === String(suburb).toLowerCase())
+) || {};
+
+const stateUpper = String(suburbData?.state || state || "VIC").toUpperCase();
+const suburbName = suburbData?.suburb || suburb || "Local Hub";
+const rawWorkshops = suburbData?.businesses || suburbData?.items || [];
+
+const workshops = rawWorkshops.map((b: any) => ({
+  ...b,
+  slug: b.slug || b.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+}));
+
+const lat = Number(suburbData?.lat) || -37.8388;
+const lng = Number(suburbData?.lng) || 144.7571;
 ---
 
-<Layout
-  title={`Diesel Mechanics & Heavy Vehicle Repairers in ${suburbName}, ${stateName?.toUpperCase()} | DieselHub`}
-  description={`Find heavy vehicle workshops, mobile diesel breakdown services, and trailer repair facilities in ${suburbName}, ${stateName?.toUpperCase()}.`}
->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 font-sans">
-    <div class="border-b border-zinc-800 pb-6">
-      <span class="text-xs font-mono text-amber-500 uppercase tracking-widest">{stateName?.toUpperCase()} Regional Hub</span>
-      <h1 class="text-3xl font-black font-mono tracking-tight text-slate-100 mt-1">
-        Diesel Mechanics in <span class="text-amber-500">{suburbName}</span>
-      </h1>
-      <p class="text-sm text-slate-400 mt-2">
-        Verified heavy transport workshops, emergency road service, and mobile linehaul mechanics.
-      </p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {listings.map((item: any) => (
-        <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3">
-          <div class="flex justify-between items-start gap-2">
-            <h2 class="text-lg font-bold text-slate-100">{item.name}</h2>
-            {item.suburb && (
-              <span class="text-xs font-mono px-2 py-0.5 rounded bg-zinc-800 text-amber-400 shrink-0">
-                {item.suburb}
-              </span>
-            )}
-          </div>
-          <p class="text-xs text-slate-400">{item.address || `${item.suburb}, ${item.state}`}</p>
-          {item.phone && (
-            <a href={`tel:${item.phone}`} class="inline-block text-xs font-mono font-bold text-amber-400 hover:text-amber-300">
-              📞 {item.phone}
-            </a>
-          )}
+<Layout title={`Diesel Mechanics & Truck Breakdown in ${suburbName}, ${stateUpper} | Diesel Hub`}>
+  <main class="min-h-screen bg-zinc-950 text-slate-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto space-y-10">
+      
+      <!-- Hub Breadcrumbs & Header -->
+      <div class="border-b border-zinc-800 pb-8 space-y-4">
+        <div class="flex items-center gap-2 text-xs font-mono text-zinc-500">
+          <a href="/" class="hover:text-amber-400">Home</a>
+          <span>/</span>
+          <span class="text-zinc-400">{stateUpper}</span>
+          <span>/</span>
+          <span class="text-amber-500 font-bold">{suburbName}</span>
         </div>
-      ))}
+
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono font-semibold mb-2">
+              <span>📍</span> {stateUpper} Freight Corridor Hub
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white uppercase font-mono">
+              Diesel Mechanics in {suburbName}
+            </h1>
+            <p class="text-sm text-slate-400 max-w-2xl mt-2 font-mono">
+              {suburbData?.localOverview || `Heavy vehicle workshops, mobile road service, and linehaul diesel mechanics servicing ${suburbName} and surrounding arterial corridors.`}
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3 text-xs font-mono text-zinc-400 bg-zinc-900 border border-zinc-800 px-4 py-2.5 rounded-lg shrink-0">
+            <span class="text-amber-400 font-bold text-base">{workshops.length}</span>
+            <span>Verified Workshops Available</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Workshop Map with Bi-Directional Sync -->
+      <SuburbMap 
+        suburbName={suburbName}
+        lat={lat}
+        lng={lng}
+        workshops={workshops}
+      />
+
+      <!-- Workshop Listings Grid -->
+      <div class="space-y-6">
+        <h2 class="text-lg font-mono font-bold text-white flex items-center gap-2">
+          <span>🔧</span> Verified Heavy Vehicle Workshops & Mechanics ({workshops.length})
+        </h2>
+
+        {workshops.length === 0 ? (
+          <div class="p-8 text-center bg-zinc-900 border border-zinc-800 rounded-xl">
+            <p class="text-sm font-mono text-slate-400">No registered workshops found in this hub yet.</p>
+          </div>
+        ) : (
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {workshops.map((biz: any) => {
+              const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(biz.address || `${biz.name}, Truganina VIC`)}`;
+              
+              return (
+                <div 
+                  id={`card-${biz.slug}`}
+                  onmouseenter={`if(window.dieselMapFocus) window.dieselMapFocus('${biz.slug}')`}
+                  class="bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 rounded-xl p-5 flex flex-col justify-between transition-all duration-200"
+                >
+                  <div class="space-y-3">
+                    <div class="flex items-start justify-between gap-2">
+                      <h3 class="font-bold text-white text-base leading-tight">
+                        {biz.name}
+                      </h3>
+                      {biz.rating && (
+                        <span class="text-xs font-mono text-amber-400 shrink-0 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                          ★ {biz.rating} ({biz.reviews || 0})
+                        </span>
+                      )}
+                    </div>
+
+                    {biz.address && (
+                      <p class="text-xs text-slate-400 flex items-start gap-1 font-mono">
+                        <span class="text-amber-500 shrink-0">📍</span>
+                        <span>{biz.address}</span>
+                      </p>
+                    )}
+
+                    {biz.overview && (
+                      <p class="text-xs text-zinc-400 line-clamp-2">
+                        {biz.overview}
+                      </p>
+                    )}
+
+                    {biz.tags && (
+                      <div class="flex flex-wrap gap-1.5 pt-1">
+                        {biz.tags.slice(0, 3).map((tag: string) => (
+                          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-950 text-slate-400 border border-zinc-800">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div class="pt-5 mt-5 border-t border-zinc-800/80 space-y-3">
+                    <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500">
+                      <span>Status: Verified</span>
+                      <a
+                        href={`/claim?business=${encodeURIComponent(biz.name)}&suburb=${encodeURIComponent(suburbName)}`}
+                        class="text-amber-500/80 hover:text-amber-400 transition-colors"
+                      >
+                        Claim listing &nearr;
+                      </a>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                      {biz.phone && (
+                        <a
+                          href={`tel:${String(biz.phone).replace(/[^0-9+]/g, "")}`}
+                          class="inline-flex items-center justify-center gap-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-xs py-2 px-2 rounded transition-colors text-center"
+                        >
+                          <span>📞</span> {biz.phone}
+                        </a>
+                      )}
+                      
+                      <a
+                        href={directionsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center justify-center gap-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 font-mono text-xs py-2 px-2 rounded transition-colors text-center"
+                      >
+                        🧭 Directions
+                      </a>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="trigger-dispatch-modal w-full inline-flex items-center justify-center gap-1 bg-zinc-950 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-zinc-800 font-mono text-xs py-2 px-3 rounded transition-colors cursor-pointer"
+                      data-biz-id={biz.slug}
+                      data-biz-name={biz.name}
+                      title="Request Callout or Quote"
+                    >
+                      ⚡ Quote / Callout
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
     </div>
-  </div>
+  </main>
+  <DispatchInquiryModal />
 </Layout>
