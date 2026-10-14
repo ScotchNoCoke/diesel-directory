@@ -1,0 +1,161 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const env = Astro.locals.runtime?.env;
+let contacts: any[] = [];
+let totalCount = 0;
+let newCount = 0;
+let resolvedCount = 0;
+
+if (env?.DB) {
+  try {
+    const { results } = await env.DB.prepare(
+      'SELECT * FROM admin_contacts ORDER BY created_at DESC LIMIT 100'
+    ).all();
+    contacts = results || [];
+    totalCount = contacts.length;
+    newCount = contacts.filter((c: any) => c.status === 'new').length;
+    resolvedCount = contacts.filter((c: any) => c.status === 'resolved').length;
+  } catch (err) {
+    console.error('Failed to load contacts from D1', err);
+  }
+}
+---
+
+<Layout title="Master Admin Dashboard | DieselHub">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800 pb-6">
+      <div>
+        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-xs font-mono font-bold text-amber-500 uppercase tracking-widest mb-2">
+          Control Center
+        </div>
+        <h1 class="text-3xl font-black font-mono text-zinc-100">Master Operations Dashboard</h1>
+        <p class="text-sm text-zinc-400">Incoming dispatch callouts, mechanic claims, and triage inquiries</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="/" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-mono rounded-lg transition">
+          View Public Site
+        </a>
+        <form method="POST" action="/api/auth/logout">
+          <button type="submit" class="px-4 py-2 bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-300 text-xs font-mono rounded-lg transition">
+            Sign Out
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="p-5 bg-zinc-900/80 border border-zinc-800 rounded-xl space-y-1">
+        <span class="text-xs font-mono text-zinc-400 uppercase">Total Logged Leads</span>
+        <p class="text-3xl font-bold font-mono text-zinc-100">{totalCount}</p>
+      </div>
+      <div class="p-5 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1">
+        <span class="text-xs font-mono text-amber-400 uppercase">Requires Triage (New)</span>
+        <p class="text-3xl font-bold font-mono text-amber-500">{newCount}</p>
+      </div>
+      <div class="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-1">
+        <span class="text-xs font-mono text-emerald-400 uppercase">Resolved Inquiries</span>
+        <p class="text-3xl font-bold font-mono text-emerald-400">{resolvedCount}</p>
+      </div>
+    </div>
+
+    <!-- Contacts Table -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+      <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+        <h2 class="text-lg font-bold font-mono text-zinc-100">Inbound Leads & Triage Requests</h2>
+        <span class="text-xs font-mono text-zinc-500">{contacts.length} entries</span>
+      </div>
+
+      {contacts.length === 0 ? (
+        <div class="p-12 text-center text-zinc-500 font-mono text-sm">
+          No triage inquiries or contacts logged in D1 yet.
+        </div>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-zinc-800 text-zinc-400 font-mono text-xs uppercase bg-zinc-950/50">
+                <th class="p-4">Timestamp</th>
+                <th class="p-4">Contact</th>
+                <th class="p-4">Category</th>
+                <th class="p-4">Message</th>
+                <th class="p-4">Status</th>
+                <th class="p-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-800/60 font-mono text-xs">
+              {contacts.map((c: any) => (
+                <tr class="hover:bg-zinc-800/30 transition">
+                  <td class="p-4 text-zinc-400 whitespace-nowrap">{new Date(c.created_at).toLocaleString('en-AU')}</td>
+                  <td class="p-4 space-y-0.5">
+                    <p class="font-bold text-zinc-200">{c.name}</p>
+                    <p class="text-zinc-500">{c.email}</p>
+                    {c.phone && <p class="text-amber-500">{c.phone}</p>}
+                  </td>
+                  <td class="p-4">
+                    <span class={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
+                      c.category === 'emergency' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                      c.category === 'claim_inquiry' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                      'bg-zinc-800 text-zinc-300'
+                    }`}>
+                      {c.category}
+                    </span>
+                  </td>
+                  <td class="p-4 text-zinc-300 max-w-xs truncate" title={c.message}>
+                    {c.message}
+                  </td>
+                  <td class="p-4">
+                    <span class={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${
+                      c.status === 'new' ? 'bg-amber-500/20 text-amber-400' :
+                      c.status === 'resolved' ? 'bg-emerald-500/20 text-emerald-400' :
+                      'bg-zinc-800 text-zinc-400'
+                    }`}>
+                      {c.status}
+                    </span>
+                  </td>
+                  <td class="p-4 text-right whitespace-nowrap">
+                    <button 
+                      class="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded transition update-status-btn"
+                      data-id={c.id}
+                      data-status={c.status === 'resolved' ? 'new' : 'resolved'}
+                    >
+                      Mark {c.status === 'resolved' ? 'New' : 'Resolved'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.update-status-btn').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        const target = e.currentTarget as HTMLButtonElement;
+        const id = target.dataset.id;
+        const status = target.dataset.status;
+
+        try {
+          const res = await fetch('/api/admin/contacts', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status })
+          });
+          if (res.ok) {
+            window.location.reload();
+          } else {
+            alert('Failed to update status');
+          }
+        } catch (err) {
+          alert('Error contacting admin API');
+        }
+      });
+    });
+  </script>
+</Layout>
