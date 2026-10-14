@@ -1,7 +1,6 @@
 /// <reference path="../.astro/types.d.ts" />
 /// <reference types="astro/client" />
 
-type KVNamespace = import("@cloudflare/workers-types").KVNamespace;
 type D1Database = import("@cloudflare/workers-types").D1Database;
 
 type ENV = {
