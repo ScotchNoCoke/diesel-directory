@@ -15,8 +15,8 @@ if (env?.DB) {
     ).all();
     contacts = results || [];
     totalCount = contacts.length;
-    newCount = contacts.filter((c: any) => c.status === "new").length;
-    resolvedCount = contacts.filter((c: any) => c.status === "resolved").length;
+    newCount = contacts.filter((c: any) => c.status === 'new').length;
+    resolvedCount = contacts.filter((c: any) => c.status === 'resolved').length;
   } catch (err) {
     console.error('Failed to load contacts from D1', err);
   }
@@ -89,7 +89,11 @@ if (env?.DB) {
                     {c.phone && <p class="text-amber-500">{c.phone}</p>}
                   </td>
                   <td class="p-4">
-                    <span class={}>
+                    <span class={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
+                      c.category === 'emergency' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                      c.category === 'claim_inquiry' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                      'bg-zinc-800 text-zinc-300'
+                    }`}>
                       {c.category}
                     </span>
                   </td>
@@ -97,7 +101,11 @@ if (env?.DB) {
                     {c.message}
                   </td>
                   <td class="p-4">
-                    <span class={}>
+                    <span class={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${
+                      c.status === 'new' ? 'bg-amber-500/20 text-amber-400' :
+                      c.status === 'resolved' ? 'bg-emerald-500/20 text-emerald-400' :
+                      'bg-zinc-800 text-zinc-400'
+                    }`}>
                       {c.status}
                     </span>
                   </td>
