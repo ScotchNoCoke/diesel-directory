@@ -192,16 +192,20 @@
         body: formData,
       });
 
-      const data = await res.json();
+      const data: unknown = await res.json();
+      const responseData =
+        typeof data === 'object' && data !== null
+          ? data as { success?: boolean; error?: string }
+          : {};
 
-      if (res.ok && data.success) {
+      if (res.ok && responseData.success) {
         alertBox.className = "p-3 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
         alertBox.textContent = "✓ Breakdown request dispatched! The workshop has received your details.";
         form.reset();
         setTimeout(() => closeModal(), 2200);
       } else {
         alertBox.className = "p-3 rounded-xl text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20";
-        alertBox.textContent = "✕ " + (data.error || "Failed to dispatch request. Please try calling directly.");
+        alertBox.textContent = "✕ " + (responseData.error || "Failed to dispatch request. Please try calling directly.");
       }
     } catch (err) {
       alertBox.className = "p-3 rounded-xl text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20";

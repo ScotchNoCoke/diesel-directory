@@ -133,13 +133,17 @@
         body: JSON.stringify(payload)
       });
 
-      const json = await res.json();
+      const json: unknown = await res.json();
       if (res.ok) {
         feedback.className = 'rounded-lg p-3 text-xs font-semibold bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 block';
         feedback.textContent = '✔ Request received! A verification confirmation has been logged for this listing.';
         setTimeout(() => closeModal(), 2000);
       } else {
-        throw new Error(json.error || 'Submission failed');
+        const errorMessage =
+          typeof json === 'object' && json !== null && 'error' in json && typeof json.error === 'string'
+            ? json.error
+            : 'Submission failed';
+        throw new Error(errorMessage);
       }
     } catch (err: any) {
       feedback.className = 'rounded-lg p-3 text-xs font-semibold bg-red-950/80 border border-red-500/40 text-red-300 block';

@@ -4,10 +4,12 @@ import DispatchInquiryModal from "../../../../components/DispatchInquiryModal.as
 import SuburbMap from "../../../../components/SuburbMap.astro";
 import rawData from "../../../../data/suburbs.json";
 
-const allSuburbs = Array.isArray(rawData) ? rawData : (rawData?.suburbs || rawData?.default || []);
+export const prerender = true;
+
+const allSuburbs = rawData;
 
 export async function getStaticPaths() {
-  const list = Array.isArray(rawData) ? rawData : (rawData?.suburbs || rawData?.default || []);
+  const list = rawData;
   const commonServices = [
     { slug: "mobile-truck-repairs", label: "Mobile Truck Repairs", tagKey: "mobile" },
     { slug: "24-7-breakdown-service", label: "24/7 Roadside Breakdown", tagKey: "breakdown" },

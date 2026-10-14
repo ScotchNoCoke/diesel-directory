@@ -1,15 +1,28 @@
 ---
+import { env } from 'cloudflare:workers';
+
 export const prerender = false;
 
-const env = Astro.locals.runtime?.env;
-let contacts = [];
+type ContactRecord = {
+  id: string;
+  created_at: string;
+  category: string;
+  name: string;
+  company_name: string | null;
+  email: string;
+  phone: string | null;
+  message: string;
+  status: string;
+};
+
+let contacts: ContactRecord[] = [];
 let error = null;
 
 if (env?.DB) {
   try {
     const { results } = await env.DB.prepare(
       'SELECT * FROM admin_contacts ORDER BY created_at DESC LIMIT 100'
-    ).all();
+    ).all<ContactRecord>();
     contacts = results || [];
   } catch (e: any) {
     error = e.message;

@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
+import { env } from 'cloudflare:workers';
 
-export const GET: APIRoute = async ({ request, locals }) => {
-  const env = locals.runtime?.env;
+export const GET: APIRoute = async ({ request }) => {
   if (!env?.DB) {
     return new Response(JSON.stringify({ error: 'Database binding missing' }), { status: 500 });
   }
@@ -28,16 +28,24 @@ export const GET: APIRoute = async ({ request, locals }) => {
   }
 };
 
-export const PATCH: APIRoute = async ({ request, locals }) => {
-  const env = locals.runtime?.env;
+export const PATCH: APIRoute = async ({ request }) => {
   if (!env?.DB) {
     return new Response(JSON.stringify({ error: 'Database binding missing' }), { status: 500 });
   }
 
   try {
-    const { id, status, notes } = await request.json();
-    if (!id) {
+    const body: unknown = await request.json();
+    if (typeof body !== 'object' || body === null) {
       return new Response(JSON.stringify({ error: 'Missing contact ID' }), { status: 400 });
+    }
+    const { id, status, notes } = body as Record<string, unknown>;
+    if (
+      typeof id !== 'string' ||
+      !id ||
+      (status !== undefined && typeof status !== 'string') ||
+      (notes !== undefined && typeof notes !== 'string')
+    ) {
+      return new Response(JSON.stringify({ error: 'Invalid contact update' }), { status: 400 });
     }
 
     await env.DB.prepare(

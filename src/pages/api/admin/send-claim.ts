@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { env } from 'cloudflare:workers';
 
 export const prerender = false;
 
@@ -13,13 +14,7 @@ interface ClaimRequestBody {
 }
 
 export const POST: APIRoute = async (context) => {
-  const runtimeEnv = ((context.locals as any)?.runtime?.env || {}) as {
-    DB?: any;
-    ADMIN_API_KEY?: string;
-    RESEND_API_KEY?: string;
-  };
-
-  const adminKey = runtimeEnv.ADMIN_API_KEY;
+  const adminKey = env.ADMIN_API_KEY;
   const authHeader = context.request.headers.get('Authorization');
 
   if (!adminKey || authHeader !== `Bearer ${adminKey}`) {
@@ -29,7 +24,7 @@ export const POST: APIRoute = async (context) => {
     });
   }
 
-  const db = runtimeEnv.DB;
+  const db = env.DB;
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding missing' }), {
       status: 500,
@@ -98,7 +93,7 @@ export const POST: APIRoute = async (context) => {
   const resendRes = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${runtimeEnv.RESEND_API_KEY}`,
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(emailPayload),

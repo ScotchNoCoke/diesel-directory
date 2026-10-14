@@ -14,10 +14,24 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const data = await request.json();
-    const { name, company_name, email, phone, category, message } = data;
+    const data: unknown = await request.json();
+    if (typeof data !== 'object' || data === null) {
+      return new Response(JSON.stringify({ error: 'Invalid request body.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
-    if (!name || !email || !message) {
+    const { name, company_name, email, phone, category, message } = data as Record<string, unknown>;
+
+    if (
+      typeof name !== 'string' ||
+      typeof email !== 'string' ||
+      typeof message !== 'string' ||
+      (company_name !== undefined && typeof company_name !== 'string') ||
+      (phone !== undefined && typeof phone !== 'string') ||
+      (category !== undefined && typeof category !== 'string')
+    ) {
       return new Response(JSON.stringify({ 
         error: 'Name, email, and message are required fields.' 
       }), {

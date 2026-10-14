@@ -13,3 +13,11 @@ type Runtime = import("@astrojs/cloudflare").Runtime<ENV>;
 declare namespace App {
   interface Locals extends Runtime {}
 }
+
+declare namespace Cloudflare {
+  interface Env {
+    ADMIN_API_KEY?: string;
+    ADMIN_SECRET?: string;
+    RESEND_API_KEY?: string;
+  }
+}

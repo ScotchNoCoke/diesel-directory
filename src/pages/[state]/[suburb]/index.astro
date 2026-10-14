@@ -4,10 +4,12 @@ import DispatchInquiryModal from "../../../components/DispatchInquiryModal.astro
 import SuburbMap from "../../../components/SuburbMap.astro";
 import rawData from "../../../data/suburbs.json";
 
-const allSuburbs = Array.isArray(rawData) ? rawData : (rawData?.suburbs || rawData?.default || []);
+export const prerender = true;
+
+const allSuburbs = rawData;
 
 export async function getStaticPaths() {
-  const list = Array.isArray(rawData) ? rawData : (rawData?.suburbs || rawData?.default || []);
+  const list = rawData;
   return list.map((sub: any) => ({
     params: {
       state: String(sub.state || "vic").toLowerCase(),

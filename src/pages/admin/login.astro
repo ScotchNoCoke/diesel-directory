@@ -1,4 +1,6 @@
 ---
+import { env } from 'cloudflare:workers';
+
 export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 
@@ -8,9 +10,9 @@ if (Astro.request.method === 'POST') {
   try {
     const data = await Astro.request.formData();
     const passkey = data.get('passkey')?.toString().trim();
-    const expected = Astro.locals.runtime?.env?.ADMIN_SECRET || 'dieselhub-admin-secret-2026';
+    const expected = env.ADMIN_SECRET || 'dieselhub-admin-secret-2026';
 
-    if (passkey === expected) {
+    if (passkey !== undefined && passkey === expected) {
       Astro.cookies.set('dh_admin_session', passkey, {
         path: '/',
         httpOnly: true,

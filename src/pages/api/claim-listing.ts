@@ -1,11 +1,11 @@
 export const prerender = false;
 
 import type { APIRoute } from 'astro';
+import { env } from 'cloudflare:workers';
 
 export const POST: APIRoute = async (context) => {
   try {
-    const runtimeEnv = (context.locals as any)?.runtime?.env || process.env;
-    const db = runtimeEnv?.DB;
+    const db = env.DB;
 
     if (!db) {
       return new Response(
@@ -67,7 +67,7 @@ export const POST: APIRoute = async (context) => {
     // 3. Dispatch Claim Magic Link via Resend
     const origin = new URL(context.request.url).origin;
     const claimUrl = `${origin}/claim?token=${token}`;
-    const resendApiKey = runtimeEnv.RESEND_API_KEY;
+    const resendApiKey = env.RESEND_API_KEY;
 
     if (resendApiKey) {
       const emailPayload = {

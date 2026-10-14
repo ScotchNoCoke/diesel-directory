@@ -139,7 +139,18 @@
 
       try {
         const response = await fetch('/api/locations.json');
-        const hubs = await response.json();
+        const hubs = await response.json() as Array<{
+          lat?: number;
+          lng?: number;
+          suburb: string;
+          state: string;
+          businesses?: Array<{
+            tags?: string[];
+            name: string;
+            address: string;
+            phone: string;
+          }>;
+        }>;
 
         navigator.geolocation.getCurrentPosition(
           (pos) => {
