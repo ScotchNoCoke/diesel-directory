@@ -214,6 +214,57 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
         </div>
       </section>
 
+    <!-- SECTION 2: Western Highway Corridor -->
+    {westernSuburbs.length > 0 && (
+      <section id="western-corridor" class="space-y-6 pt-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-4">
+          <div>
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-mono font-bold mb-2">
+              <span>M8 / A8 ROUTE</span> &bull; <span>MELBOURNE &rarr; ADELAIDE LINEHAUL</span>
+            </div>
+            <h2 class="text-2xl font-bold font-mono text-slate-100">Western Highway Freight Corridor</h2>
+          </div>
+          <span class="text-xs font-mono text-slate-400 bg-zinc-900 px-3 py-1 rounded border border-zinc-800">
+            Interstate Linehaul Belt
+          </span>
+        </div>
+
+        <div class="space-y-8">
+          {westernSuburbs.map((suburbItem: any) => (
+            <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 space-y-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800/60 pb-3">
+                <a 
+                  href={`/${suburbItem.state.toLowerCase()}/${suburbItem.suburb.toLowerCase().replace(/\s+/g, "-")}`}
+                  class="text-xl font-bold font-mono text-amber-500 hover:text-amber-400 transition-colors inline-flex items-center gap-2"
+                >
+                  <MiniMapIcon lat={suburbItem.lat} lng={suburbItem.lng} name={suburbItem.suburb} className="w-7 h-5 rounded border border-zinc-800 bg-zinc-950/80 group-hover:border-amber-500/50 transition-colors" />
+                  <span>{suburbItem.suburb}</span>
+                  <span class="text-xs text-slate-400 font-normal">({suburbItem.state} {suburbItem.postcode})</span>
+                  <span class="text-xs text-slate-500">&rarr;</span>
+                </a>
+                <span class="text-xs font-mono text-slate-400 bg-zinc-950 px-2.5 py-1 rounded border border-zinc-800">
+                  {(suburbItem.businesses || []).length} Verified Repairers
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {(suburbItem.businesses || []).slice(0, 3).map((biz: any) => (
+                  <WorkshopCard
+                    biz={biz}
+                    suburbName={suburbItem.suburb}
+                    state={suburbItem.state}
+                    suburbSlug={suburbItem.suburb.toLowerCase().replace(/\s+/g, "-")}
+                    isOpenNow={claimedProfilesMap.get(biz.slug)?.is_open_now}
+                    emergencyPhone={claimedProfilesMap.get(biz.slug)?.emergency_phone || claimedProfilesMap.get(biz.slug)?.phone}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
     <!-- SECTION 3: Hume Corridor -->
     {humeSuburbs.length > 0 && (
       <section id="hume-corridor" class="space-y-6 pt-6">

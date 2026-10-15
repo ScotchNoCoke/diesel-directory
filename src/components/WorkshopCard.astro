@@ -6,6 +6,7 @@ interface Props {
   suburbSlug?: string;
   isOpenNow?: boolean;
   emergencyPhone?: string;
+  enableMapHover?: boolean;
 }
 
 const { 
@@ -14,7 +15,8 @@ const {
   state = "VIC", 
   suburbSlug = "", 
   isOpenNow = false, 
-  emergencyPhone = "" 
+  emergencyPhone = "",
+  enableMapHover = false
 } = Astro.props;
 
 const safeState = String(state || "VIC");
@@ -30,24 +32,43 @@ const rawBadges = Array.isArray(biz?.tags) ? biz.tags : Array.isArray(biz?.servi
 const badges = rawBadges.slice(0, 2);
 ---
 
-<div class="h-full p-4 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-3">
+<div 
+  id={`card-${bSlug}`}
+  onmouseenter={enableMapHover ? `if(window.dieselMapFocus) window.dieselMapFocus("${bSlug}")` : undefined}
+  class="h-full p-4 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-3"
+>
   <div class="space-y-2">
     <div class="flex items-start justify-between gap-2">
-      <!-- ALWAYS links to the internal dedicated mechanic profile -->
       <a 
         href={internalUrl} 
         class="text-sm font-bold leading-tight text-slate-200 hover:text-amber-400 transition-colors line-clamp-1"
       >
         {biz?.name || "Diesel Workshop"}
       </a>
-      {isOpenNow ? (
-        <span class="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">OPEN NOW</span>
-      ) : biz?.is_24_7 ? (
-        <span class="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/30">24/7 CALLOUT</span>
-      ) : null}
+      <div class="flex items-center gap-1.5 shrink-0">
+        {biz?.rating && (
+          <span class="flex items-center gap-1 text-[11px] font-mono text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+            <span>★</span> {biz.rating}
+          </span>
+        )}
+        {isOpenNow ? (
+          <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">OPEN NOW</span>
+        ) : biz?.is_24_7 ? (
+          <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/30">24/7 CALLOUT</span>
+        ) : null}
+      </div>
     </div>
     
-    <p class="text-xs text-slate-400 line-clamp-1">{biz?.address || `${suburbName}, ${safeState.toUpperCase()}`}</p>
+    <p class="text-xs text-slate-400 line-clamp-1 flex items-center gap-1">
+      <span class="text-slate-500 text-[10px]">📍</span>
+      <span class="truncate">{biz?.address || `${suburbName}, ${safeState.toUpperCase()}`}</span>
+    </p>
+
+    {biz?.editorialSummary && (
+      <p class="text-[11px] text-slate-400 line-clamp-1 leading-relaxed">
+        {biz.editorialSummary}
+      </p>
+    )}
 
     <div class="flex flex-wrap gap-1.5 pt-1">
       {biz?.b_double_access && (
@@ -94,13 +115,14 @@ const badges = rawBadges.slice(0, 2);
         ⚡ Quote / Callout
       </button>
 
-      <!-- Internal profile link is ALWAYS present and consistent across all cards -->
+      <!-- Dedicated hosted profile button across all cards -->
       <a
         href={internalUrl}
-        class="p-2 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-slate-300 hover:text-amber-400 transition-colors text-xs font-mono"
+        class="inline-flex items-center justify-center gap-1 p-2 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-amber-400 hover:text-amber-300 transition-colors text-xs font-mono"
         title="View Profile & Workshop Specs"
       >
-        &rarr;
+        <span>Profile</span>
+        <span>&rarr;</span>
       </a>
     </div>
   </div>
