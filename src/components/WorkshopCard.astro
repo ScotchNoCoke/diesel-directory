@@ -1,0 +1,107 @@
+---
+interface Props {
+  biz: any;
+  suburbName?: string;
+  state?: string;
+  suburbSlug?: string;
+  isOpenNow?: boolean;
+  emergencyPhone?: string;
+}
+
+const { 
+  biz = {}, 
+  suburbName = "", 
+  state = "VIC", 
+  suburbSlug = "", 
+  isOpenNow = false, 
+  emergencyPhone = "" 
+} = Astro.props;
+
+const safeState = String(state || "VIC");
+const stateSlug = safeState.toLowerCase();
+const sSlug = suburbSlug || String(suburbName || "").toLowerCase().replace(/\s+/g, "-");
+const bSlug = biz?.slug || String(biz?.name || "workshop").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+const internalUrl = `/${stateSlug}/${sSlug}/${bSlug}`;
+
+const displayPhone = emergencyPhone || biz?.phone || "";
+const cleanPhone = displayPhone ? String(displayPhone).replace(/[^0-9+]/g, "") : "";
+const rawBadges = Array.isArray(biz?.tags) ? biz.tags : Array.isArray(biz?.services) ? biz.services : [];
+const badges = rawBadges.slice(0, 2);
+---
+
+<div class="h-full p-4 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-3">
+  <div class="space-y-2">
+    <div class="flex items-start justify-between gap-2">
+      <!-- ALWAYS links to the internal dedicated mechanic profile -->
+      <a 
+        href={internalUrl} 
+        class="text-sm font-bold leading-tight text-slate-200 hover:text-amber-400 transition-colors line-clamp-1"
+      >
+        {biz?.name || "Diesel Workshop"}
+      </a>
+      {isOpenNow ? (
+        <span class="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">OPEN NOW</span>
+      ) : biz?.is_24_7 ? (
+        <span class="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/30">24/7 CALLOUT</span>
+      ) : null}
+    </div>
+    
+    <p class="text-xs text-slate-400 line-clamp-1">{biz?.address || `${suburbName}, ${safeState.toUpperCase()}`}</p>
+
+    <div class="flex flex-wrap gap-1.5 pt-1">
+      {biz?.b_double_access && (
+        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-slate-300">
+          B-Double Access
+        </span>
+      )}
+      {badges.map((tag: string) => (
+        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-slate-400">
+          {tag}
+        </span>
+      ))}
+    </div>
+  </div>
+
+  <div class="space-y-2 pt-2 border-t border-zinc-900">
+    <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500">
+      <span>Status: Registered</span>
+      <a 
+        href={`/claim?business=${encodeURIComponent(biz?.name || "")}&suburb=${encodeURIComponent(suburbName)}`}
+        class="text-amber-500/80 hover:text-amber-400 transition-colors"
+      >
+        Claim listing &nearr;
+      </a>
+    </div>
+
+    <div class="flex items-center justify-between gap-2">
+      {displayPhone ? (
+        <a
+          href={`tel:${cleanPhone}`}
+          class="flex-1 inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-mono font-bold text-xs py-2 px-3 rounded transition-colors text-center"
+        >
+          <span>📞</span> {displayPhone}
+        </a>
+      ) : null}
+
+      <button
+        type="button"
+        class="trigger-dispatch-modal inline-flex items-center justify-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-zinc-800 font-mono text-xs py-2 px-3 rounded transition-colors cursor-pointer"
+        data-biz-id={bSlug}
+        data-biz-name={biz?.name || ""}
+        title="Request Callout or Quote"
+      >
+        ⚡ Quote / Callout
+      </button>
+
+      <!-- Internal profile link is ALWAYS present and consistent across all cards -->
+      <a
+        href={internalUrl}
+        class="p-2 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-slate-300 hover:text-amber-400 transition-colors text-xs font-mono"
+        title="View Profile & Workshop Specs"
+      >
+        &rarr;
+      </a>
+    </div>
+  </div>
+</div>
