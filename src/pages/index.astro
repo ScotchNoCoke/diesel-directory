@@ -19,6 +19,7 @@ if (db) {
   }
 }
 import Layout from '../layouts/Layout.astro';
+import MiniMapIcon from '../components/MiniMapIcon.astro';
 import suburbs from '../data/suburbs.json';
 
 // Calculate statewide totals
@@ -45,6 +46,10 @@ const westernSuburbs = suburbs.filter((s: any) =>
 
 const humeSuburbs = suburbs.filter((s: any) => 
   ['seymour', 'wodonga', 'albury', 'holbrook', 'gundagai', 'yass', 'goulburn', 'prestons'].includes(s.suburb.toLowerCase().replace(/\s+/g, '-'))
+);
+
+const princesWestSuburbs = suburbs.filter((s: any) => 
+  ['geelong', 'colac', 'camperdown', 'warrnambool', 'portland', 'mount-gambier'].includes(s.suburb.toLowerCase().replace(/\s+/g, '-'))
 );
 
 // Fallback to all if regional arrays are sparse
@@ -98,34 +103,58 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
       <div id="location-result" class="mt-4 hidden"></div>
     </section>
 
-    <!-- Fast Corridor Navigation Jump Bar -->
+        <!-- Fast Corridor Navigation Jump Bar -->
     <section class="space-y-3">
       <div class="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
         <span class="text-amber-500">🛣️</span> Quick Jump to Corridor
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <a href="#metro-corridor" class="p-3.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all border-l-4 border-l-amber-500 group">
-          <div class="text-xs font-mono font-bold text-amber-500 group-hover:text-amber-400 flex items-center justify-between">
-            <span>Melbourne Metropolitan Belt</span>
-            <span>&darr;</span>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <!-- Melbourne Metro -->
+        <a href="#metro-corridor" class="p-3 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all border-l-4 border-l-amber-500 group flex flex-col justify-between">
+          <div>
+            <div class="text-xs font-mono font-bold text-amber-500 group-hover:text-amber-400 flex items-center justify-between">
+              <span>Melbourne Metro Belt</span>
+              <span>&darr;</span>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1 line-clamp-1">Truganina, Laverton, Campbellfield, Dandenong</div>
           </div>
-          <div class="text-xs text-slate-400 mt-1">Truganina, Laverton, Campbellfield, Dandenong</div>
+          <span class="text-[10px] font-mono text-zinc-500 mt-2">M1 / Western Ring Rd</span>
         </a>
 
-        <a href="#western-corridor" class="p-3.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all border-l-4 border-l-amber-500 group">
-          <div class="text-xs font-mono font-bold text-amber-500 group-hover:text-amber-400 flex items-center justify-between">
-            <span>Western Highway (M8 / A8)</span>
-            <span>&darr;</span>
+        <!-- Western Highway -->
+        <a href="#western-corridor" class="p-3 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all border-l-4 border-l-amber-500 group flex flex-col justify-between">
+          <div>
+            <div class="text-xs font-mono font-bold text-amber-500 group-hover:text-amber-400 flex items-center justify-between">
+              <span>Western Highway</span>
+              <span>&darr;</span>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1 line-clamp-1">Ballarat, Horsham, Nhill, Bordertown, Adelaide</div>
           </div>
-          <div class="text-xs text-slate-400 mt-1">Ballarat, Horsham, Nhill, SA Staging</div>
+          <span class="text-[10px] font-mono text-zinc-500 mt-2">M8 / A8 Linehaul</span>
         </a>
 
-        <a href="#hume-corridor" class="p-3.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all border-l-4 border-l-amber-500 group">
-          <div class="text-xs font-mono font-bold text-amber-500 group-hover:text-amber-400 flex items-center justify-between">
-            <span>Hume Corridor (M31)</span>
-            <span>&darr;</span>
+        <!-- Hume Highway -->
+        <a href="#hume-corridor" class="p-3 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all border-l-4 border-l-amber-500 group flex flex-col justify-between">
+          <div>
+            <div class="text-xs font-mono font-bold text-amber-500 group-hover:text-amber-400 flex items-center justify-between">
+              <span>Hume Highway</span>
+              <span>&darr;</span>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1 line-clamp-1">Seymour, Albury-Wodonga, Gundagai, Yass, Sydney</div>
           </div>
-          <div class="text-xs text-slate-400 mt-1">Seymour, Wodonga, Albury, Gundagai</div>
+          <span class="text-[10px] font-mono text-zinc-500 mt-2">M31 Interstate Gateway</span>
+        </a>
+
+        <!-- Princes Highway West -->
+        <a href="#princes-west-corridor" class="p-3 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all border-l-4 border-l-amber-500 group flex flex-col justify-between">
+          <div>
+            <div class="text-xs font-mono font-bold text-amber-500 group-hover:text-amber-400 flex items-center justify-between">
+              <span>Princes Highway West</span>
+              <span>&darr;</span>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1 line-clamp-1">Geelong, Colac, Camperdown, Warrnambool, Portland</div>
+          </div>
+          <span class="text-[10px] font-mono text-zinc-500 mt-2">M1 / A1 Port & Dairy Route</span>
         </a>
       </div>
     </section>
@@ -151,6 +180,7 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                   href={`/${suburbItem.state.toLowerCase()}/${suburbItem.suburb.toLowerCase().replace(/\s+/g, '-')}`}
                   class="text-xl font-bold font-mono text-amber-500 hover:text-amber-400 transition-colors inline-flex items-center gap-2"
                 >
+                  <MiniMapIcon lat={suburbItem.lat} lng={suburbItem.lng} name={suburbItem.suburb} className="w-7 h-5 rounded border border-zinc-800 bg-zinc-950/80 group-hover:border-amber-500/50 transition-colors" />
                   <span>{suburbItem.suburb}</span>
                   <span class="text-xs text-slate-400 font-normal">({suburbItem.state} {suburbItem.postcode})</span>
                   <span class="text-xs text-slate-500">&rarr;</span>
@@ -167,10 +197,10 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
             <!-- Business Listing Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {(suburbItem.businesses || []).map((biz: any) => (
-                <div class="p-5 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-4">
-                  <div class="space-y-2.5">
+                <div class="p-3.5 rounded-lg bg-zinc-950 border border-zinc-800/80 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-2.5">
+                  <div class="space-y-1.5">
                     <div class="flex items-start justify-between gap-2">
-                      <h3 class="font-bold font-mono text-slate-100 text-base leading-snug">
+                      <h3 class="font-bold font-mono text-slate-100 text-sm font-bold leading-tight">
                         {biz.name}
                       </h3>
                       {biz.rating && (
@@ -188,7 +218,7 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                     </p>
 
                     {biz.editorialSummary && (
-                      <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                      <p class="text-xs text-slate-400 line-clamp-1 leading-relaxed">
                         {biz.editorialSummary}
                       </p>
                     )}
@@ -285,6 +315,7 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                   href={`/${suburbItem.state.toLowerCase()}/${suburbItem.suburb.toLowerCase().replace(/\s+/g, '-')}`}
                   class="text-xl font-bold font-mono text-amber-500 hover:text-amber-400 transition-colors inline-flex items-center gap-2"
                 >
+                  <MiniMapIcon lat={suburbItem.lat} lng={suburbItem.lng} name={suburbItem.suburb} className="w-7 h-5 rounded border border-zinc-800 bg-zinc-950/80 group-hover:border-amber-500/50 transition-colors" />
                   <span>{suburbItem.suburb}</span>
                   <span class="text-xs text-slate-400 font-normal">({suburbItem.state} {suburbItem.postcode})</span>
                   <span class="text-xs text-slate-500">&rarr;</span>
@@ -296,10 +327,10 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
 
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {(suburbItem.businesses || []).map((biz: any) => (
-                  <div class="p-5 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-4">
-                    <div class="space-y-2.5">
+                  <div class="p-3.5 rounded-lg bg-zinc-950 border border-zinc-800/80 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-2.5">
+                    <div class="space-y-1.5">
                       <div class="flex items-start justify-between gap-2">
-                        <h3 class="font-bold font-mono text-slate-100 text-base leading-snug">{biz.name}</h3>
+                        <h3 class="font-bold font-mono text-slate-100 text-sm font-bold leading-tight">{biz.name}</h3>
                         {biz.rating && (
                           <div class="flex items-center gap-1 text-xs font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 whitespace-nowrap">
                             <span>★</span> {biz.rating}
@@ -311,7 +342,7 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                         <span class="truncate">{biz.address}</span>
                       </p>
                       {biz.editorialSummary && (
-                        <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">{biz.editorialSummary}</p>
+                        <p class="text-xs text-slate-400 line-clamp-1 leading-relaxed">{biz.editorialSummary}</p>
                       )}
                     </div>
                     <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-1">
@@ -379,6 +410,7 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                   href={`/${suburbItem.state.toLowerCase()}/${suburbItem.suburb.toLowerCase().replace(/\s+/g, '-')}`}
                   class="text-xl font-bold font-mono text-amber-500 hover:text-amber-400 transition-colors inline-flex items-center gap-2"
                 >
+                  <MiniMapIcon lat={suburbItem.lat} lng={suburbItem.lng} name={suburbItem.suburb} className="w-7 h-5 rounded border border-zinc-800 bg-zinc-950/80 group-hover:border-amber-500/50 transition-colors" />
                   <span>{suburbItem.suburb}</span>
                   <span class="text-xs text-slate-400 font-normal">({suburbItem.state} {suburbItem.postcode})</span>
                   <span class="text-xs text-slate-500">&rarr;</span>
@@ -390,10 +422,10 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
 
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {(suburbItem.businesses || []).map((biz: any) => (
-                  <div class="p-5 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-4">
-                    <div class="space-y-2.5">
+                  <div class="p-3.5 rounded-lg bg-zinc-950 border border-zinc-800/80 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-2.5">
+                    <div class="space-y-1.5">
                       <div class="flex items-start justify-between gap-2">
-                        <h3 class="font-bold font-mono text-slate-100 text-base leading-snug">{biz.name}</h3>
+                        <h3 class="font-bold font-mono text-slate-100 text-sm font-bold leading-tight">{biz.name}</h3>
                         {biz.rating && (
                           <div class="flex items-center gap-1 text-xs font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 whitespace-nowrap">
                             <span>★</span> {biz.rating}
@@ -405,7 +437,7 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
                         <span class="truncate">{biz.address}</span>
                       </p>
                       {biz.editorialSummary && (
-                        <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">{biz.editorialSummary}</p>
+                        <p class="text-xs text-slate-400 line-clamp-1 leading-relaxed">{biz.editorialSummary}</p>
                       )}
                     </div>
                     <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-1">
@@ -451,6 +483,78 @@ const displayMetro = metroSuburbs.length > 0 ? metroSuburbs : suburbs.slice(0, 5
         </div>
       </section>
     )}
+
+    <!-- Princes Highway West Section -->
+    {princesWestSuburbs.length > 0 && (
+      <section id="princes-west-corridor" class="corridor-section space-y-6" data-section="princes">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-800 gap-4">
+          <div>
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-mono font-bold mb-2">
+              <span>M1 / A1 ROUTE</span> &bull; <span>PORT & DAIRY CORRIDOR</span>
+            </div>
+            <h2 class="text-2xl font-black uppercase tracking-tight text-slate-100 flex items-center gap-3">
+              <span>Princes Highway West</span>
+              <span class="text-sm font-normal text-slate-500 font-mono">Geelong &rarr; Portland &bull; SA Border</span>
+            </h2>
+          </div>
+          <a href="/corridors/geelong-portland-princes-west" class="text-xs font-mono text-amber-500 hover:text-amber-400 flex items-center gap-1">
+            <span>View Corridor Staging Map</span>
+            <span>&rarr;</span>
+          </a>
+        </div>
+
+        <div class="space-y-8">
+          {princesWestSuburbs.map((suburbItem: any) => (
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <a
+                  href={`/${suburbItem.state.toLowerCase()}/${suburbItem.suburb.toLowerCase().replace(/\s+/g, '-')}`}
+                  class="text-xl font-bold font-mono text-amber-500 hover:text-amber-400 transition-colors inline-flex items-center gap-2"
+                >
+                  <MiniMapIcon lat={suburbItem.lat} lng={suburbItem.lng} name={suburbItem.suburb} className="w-7 h-5 rounded border border-zinc-800 bg-zinc-950/80 group-hover:border-amber-500/50 transition-colors" />
+                  <span>{suburbItem.suburb}</span>
+                  <span class="text-xs text-slate-400 font-normal">({suburbItem.state} {suburbItem.postcode})</span>
+                  <span class="text-xs text-slate-500">&rarr;</span>
+                </a>
+                <span class="text-xs text-slate-500 font-mono">{suburbItem.businesses?.length || 0} workshops</span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {suburbItem.businesses && suburbItem.businesses.slice(0, 3).map((biz: any) => (
+                  <div class="p-3.5 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-2.5">
+                    <div class="space-y-1.5">
+                      <div class="flex items-start justify-between gap-2">
+                        <a href={`/${suburbItem.state.toLowerCase()}/${suburbItem.suburb.toLowerCase().replace(/\s+/g, '-')}/${biz.slug}`} class="text-sm font-bold leading-tight text-slate-200 hover:text-amber-400 transition-colors line-clamp-1">
+                          {biz.name}
+                        </a>
+                        {claimedProfilesMap.get(biz.slug)?.is_open_now ? (
+                          <span class="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">OPEN NOW</span>
+                        ) : null}
+                      </div>
+                      <p class="text-xs text-slate-400 line-clamp-1">{biz.address}</p>
+                    </div>
+
+                    <div class="pt-2 border-t border-zinc-900 flex items-center justify-between text-xs">
+                      <a
+                        href={`tel:${(claimedProfilesMap.get(biz.slug)?.emergency_phone || claimedProfilesMap.get(biz.slug)?.phone || biz.phone).replace(/[^0-9+]/g, "")}`}
+                        class="text-amber-500 hover:text-amber-400 font-mono font-bold flex items-center gap-1"
+                      >
+                        <span>📞</span>
+                        <span>{claimedProfilesMap.get(biz.slug)?.emergency_phone || claimedProfilesMap.get(biz.slug)?.phone || biz.phone}</span>
+                      </a>
+                      <a href={`/${suburbItem.state.toLowerCase()}/${suburbItem.suburb.toLowerCase().replace(/\s+/g, '-')}/${biz.slug}`} class="text-slate-400 hover:text-slate-200 text-[11px]">
+                        Details &rarr;
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
 
   </div>
   <DispatchInquiryModal />

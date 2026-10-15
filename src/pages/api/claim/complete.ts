@@ -8,6 +8,7 @@ export const POST: APIRoute = async (context) => {
   try {
     const db = (env as any)?.DB;
     const sessionKv = (env as any)?.SESSION;
+    const resendApiKey = (env as any)?.RESEND_API_KEY;
 
     if (!db || !sessionKv) {
       return new Response(
@@ -51,7 +52,7 @@ export const POST: APIRoute = async (context) => {
       .bind(now, token)
       .run();
 
-    // 2. Check if user already exists by email
+    // 2. Insert or update user
     const existingUser = (await db
       .prepare('SELECT id FROM users WHERE email = ?')
       .bind(tokenRecord.recipient_email)
@@ -81,7 +82,58 @@ export const POST: APIRoute = async (context) => {
 
     const finalUserId = existingUser ? existingUser.id : userId;
 
-    // 3. Issue session in Cloudflare KV
+    // 3. Dispatch alert via Resend
+    if (resendApiKey) {
+      try {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'Diesel Hub Alerts <admin@dieselhub.com.au>',
+            to: ['admin@dieselhub.com.au', 'scotchss777@gmail.com'],
+            subject: `🎉 Listing Claimed: ${tokenRecord.business_id}`,
+            html: `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 24px; color: #1e293b; max-width: 600px; margin: 0 auto;">
+                <div style="background-color: #059669; color: #ffffff; padding: 12px 18px; border-radius: 8px 8px 0 0; font-weight: bold; font-size: 16px;">
+                  ✓ Workshop Profile Claimed & Verified
+                </div>
+                <div style="border: 1px solid #e2e8f0; border-top: none; padding: 20px; border-radius: 0 0 8px 8px; background-color: #ffffff;">
+                  <p style="margin-top: 0; font-size: 14px; color: #475569;">
+                    A workshop operator has completed their account creation and claimed their business listing on Diesel Hub.
+                  </p>
+                  <table style="width: 100%; font-size: 13px; text-align: left; border-collapse: collapse; margin: 16px 0;">
+                    <tr>
+                      <th style="padding: 8px 12px; border: 1px solid #e2e8f0; background: #f8fafc; width: 35%;">Workshop</th>
+                      <td style="padding: 8px 12px; border: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${tokenRecord.business_id}</td>
+                    </tr>
+                    <tr>
+                      <th style="padding: 8px 12px; border: 1px solid #e2e8f0; background: #f8fafc;">Operator Email</th>
+                      <td style="padding: 8px 12px; border: 1px solid #e2e8f0;">${tokenRecord.recipient_email}</td>
+                    </tr>
+                    <tr>
+                      <th style="padding: 8px 12px; border: 1px solid #e2e8f0; background: #f8fafc;">Timestamp</th>
+                      <td style="padding: 8px 12px; border: 1px solid #e2e8f0;">${new Date().toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })}</td>
+                    </tr>
+                  </table>
+                  <div style="margin-top: 24px;">
+                    <a href="https://dieselhub.com.au/login" style="background-color: #f59e0b; color: #09090b; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 13px; display: inline-block;">
+                      Workshop Sign In &rarr;
+                    </a>
+                  </div>
+                </div>
+              </div>
+            `,
+          }),
+        });
+      } catch (emailErr) {
+        console.error('Failed to dispatch claim alert email:', emailErr);
+      }
+    }
+
+    // 4. Issue session in Cloudflare KV
     const sessionId = await createSession(sessionKv, {
       userId: finalUserId,
       businessId: tokenRecord.business_id,

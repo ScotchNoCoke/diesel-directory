@@ -49,7 +49,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "service@daimlertruckslaverton.com.au"
       },
       {
         "name": "Volscan Truck Repairs",
@@ -72,7 +73,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "info.volscan@gmail.com"
       },
       {
         "name": "G M Truck Repairs",
@@ -95,7 +97,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "admin@gmtruckrepairs.com.au"
       },
       {
         "name": "Road King Truck & Trailer Repairs",
@@ -141,7 +144,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "select2-bootstrap4-theme@1.2.3"
       },
       {
         "name": "CMI Hino Melbourne",
@@ -239,7 +243,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "admin@colacbodyworks.com.au"
       },
       {
         "name": "Trackright 3 (AMA Group Heavy Vehicle)",
@@ -285,7 +290,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "adtrans@adtranstrucks.com.au"
       },
       {
         "name": "Truck Fix West",
@@ -308,7 +314,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "info@latinotype.com"
       },
       {
         "name": "Callaway Diesel",
@@ -377,7 +384,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "admin@gmtruckrepairs.com.au"
       }
     ]
   },
@@ -520,7 +528,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "info@europeantruckrepairs.com.au"
       },
       {
         "name": "Campbellfield Trailer Services",
@@ -618,7 +627,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "info@truck-tech.com.au"
       },
       {
         "name": "Daimler Trucks Dandenong",
@@ -641,7 +651,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "service@daimlertrucksdandenong.com.au"
       },
       {
         "name": "Truckrite Heavy Vehicle Repairs",
@@ -664,7 +675,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "info@truckrite.com.au"
       },
       {
         "name": "DHT Transport Repairs Melbourne",
@@ -687,7 +699,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "20admin@dhttr.com.au"
       },
       {
         "name": "NewWays Truck Service",
@@ -710,7 +723,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "wght@300..700"
       },
       {
         "name": "Innovative Truck Centre",
@@ -733,7 +747,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "accounts@innovativetruckcentre.com.au"
       },
       {
         "name": "Royans Dandenong",
@@ -756,7 +771,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "headoffice@royans.com.au"
       }
     ]
   },
@@ -831,7 +847,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "admin@tcscentre.com.au"
       },
       {
         "name": "R & G Truck Repairs",
@@ -877,7 +894,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "headoffice@royans.com.au"
       },
       {
         "name": "Big Rig Diesel Repairs",
@@ -900,7 +918,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "keven@bigrigdiesel.com.au"
       },
       {
         "name": "Rankin Diesel Injection Service",
@@ -923,7 +942,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "sales@rankindiesel.com.au"
       }
     ]
   },
@@ -974,7 +994,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "intl-segmenter@11.7.10"
       },
       {
         "name": "Seymour & District Diesel Repairs",
@@ -1140,7 +1161,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "enquiry@twincitytruckcentre.com.au"
       },
       {
         "name": "CMV Truck & Bus Wodonga",
@@ -1163,7 +1185,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "select2-bootstrap4-theme@1.2.3"
       },
       {
         "name": "Heavy Mechanics Wodonga",
@@ -1232,7 +1255,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "mymail@mailservice.com"
       },
       {
         "name": "Royans Wodonga",
@@ -1255,7 +1279,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "headoffice@royans.com.au"
       },
       {
         "name": "Prestige Truck Repairs Wodonga",
@@ -1278,7 +1303,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "johno.onsite@gmail.com"
       }
     ]
   },
@@ -1329,7 +1355,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "service@daimlertrucksballarat.com.au"
       },
       {
         "name": "Ballarat Commercial Service Centre (BCSC)",
@@ -1352,7 +1379,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "workshop@ballaratcsc.com.au"
       },
       {
         "name": "Ballarat Truck Centre",
@@ -1398,7 +1426,8 @@
           "driveThroughBays": false,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "servicesonsite@outlook.com.au"
       },
       {
         "name": "Lennox Contracting Heavy Mechanical",
@@ -1421,7 +1450,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "lennox_contracting@hotmail.com"
       },
       {
         "name": "Ballarat Roadworthy & Diesel Centre",
@@ -1661,7 +1691,8 @@
           "driveThroughBays": true,
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
-        }
+        },
+        "email": "sales@hartwigs.com.au"
       },
       {
         "name": "Albury Heavy Truck Repairs",
@@ -2438,6 +2469,225 @@
           "nhvrRoadGazetted": true,
           "verifiedByOwner": false
         }
+      }
+    ]
+  },
+  {
+    "suburb": "Geelong",
+    "state": "VIC",
+    "postcode": "3220",
+    "corridor": "geelong-portland-princes-west",
+    "lat": -38.1499,
+    "lng": 144.3617,
+    "businesses": [
+      {
+        "name": "Wilsons Heavy Diesel Services",
+        "slug": "wilsons-heavy-diesel-geelong",
+        "phone": "(03) 5277 2200",
+        "address": "42-46 Separation St, North Geelong VIC 3215",
+        "has_mobile_service": true,
+        "is_24_7": true,
+        "b_double_access": true,
+        "has_dpf_service": true,
+        "services": [
+          "Cummins",
+          "Detroit",
+          "In-Chassis Rebuilds",
+          "Mobile Breakdown",
+          "Roadside Assistance"
+        ]
+      },
+      {
+        "name": "Geelong Truck & Machinery Repairs",
+        "slug": "geelong-truck-machinery-repairs",
+        "phone": "(03) 5221 8844",
+        "address": "12-14 Industrial Dr, Breakwater VIC 3219",
+        "has_mobile_service": false,
+        "is_24_7": false,
+        "b_double_access": true,
+        "has_dpf_service": false,
+        "services": [
+          "Brake Roller Testing",
+          "Japanese Trucks",
+          "VicRoads RWC",
+          "Suspension & Steering"
+        ]
+      }
+    ]
+  },
+  {
+    "suburb": "Colac",
+    "state": "VIC",
+    "postcode": "3250",
+    "corridor": "geelong-portland-princes-west",
+    "lat": -38.3402,
+    "lng": 143.5853,
+    "businesses": [
+      {
+        "name": "Colac Truck & Ag Repairs",
+        "slug": "colac-truck-ag-repairs",
+        "phone": "(03) 5231 4488",
+        "address": "88-92 Main St, Colac East VIC 3250",
+        "has_mobile_service": true,
+        "is_24_7": true,
+        "b_double_access": true,
+        "has_dpf_service": false,
+        "services": [
+          "Timber Jinkers",
+          "Cummins Diagnostics",
+          "Roadside Breakdown",
+          "Brake Relines"
+        ]
+      },
+      {
+        "name": "Coragulac Diesel & Mechanical",
+        "slug": "coragulac-diesel-mechanical",
+        "phone": "(03) 5233 1290",
+        "address": "Corangamite Lake Rd, Coragulac VIC 3249",
+        "has_mobile_service": true,
+        "is_24_7": false,
+        "b_double_access": true,
+        "has_dpf_service": false,
+        "services": [
+          "Dairy Tankers",
+          "Field Service Ute",
+          "Mobile Welding",
+          "Air Line Repairs"
+        ]
+      }
+    ]
+  },
+  {
+    "suburb": "Camperdown",
+    "state": "VIC",
+    "postcode": "3260",
+    "corridor": "geelong-portland-princes-west",
+    "lat": -38.2327,
+    "lng": 143.1492,
+    "businesses": [
+      {
+        "name": "Lakes & Craters Heavy Mechanical",
+        "slug": "lakes-craters-heavy-mechanical",
+        "phone": "(03) 5593 1888",
+        "address": "29 Depot Rd, Camperdown VIC 3260",
+        "has_mobile_service": true,
+        "is_24_7": true,
+        "b_double_access": true,
+        "has_dpf_service": false,
+        "services": [
+          "Livestock Transporters",
+          "Jaltest Diagnostics",
+          "ABS/EBS Troubleshooting",
+          "Mobile Callout"
+        ]
+      },
+      {
+        "name": "Terang Diesel Services",
+        "slug": "terang-diesel-services",
+        "phone": "(03) 5592 1450",
+        "address": "14 Peterborough Rd, Terang VIC 3264",
+        "has_mobile_service": false,
+        "is_24_7": false,
+        "b_double_access": true,
+        "has_dpf_service": false,
+        "services": [
+          "Hydraulic Hose Manufacturing",
+          "Driveline Repairs",
+          "Fleet Maintenance"
+        ]
+      }
+    ]
+  },
+  {
+    "suburb": "Warrnambool",
+    "state": "VIC",
+    "postcode": "3280",
+    "corridor": "geelong-portland-princes-west",
+    "lat": -38.3813,
+    "lng": 142.4878,
+    "businesses": [
+      {
+        "name": "Warrnambool Truck & Trailer Repairs",
+        "slug": "warrnambool-truck-trailer-repairs",
+        "phone": "(03) 5562 7711",
+        "address": "55 Raglan Parade, Warrnambool East VIC 3280",
+        "has_mobile_service": true,
+        "is_24_7": true,
+        "b_double_access": true,
+        "has_dpf_service": true,
+        "services": [
+          "Trailer Repairs",
+          "Wabco/Knorr ABS Diagnostics",
+          "Refrigerated Van Maintenance",
+          "Emergency Breakdown"
+        ]
+      },
+      {
+        "name": "South West Diesel Specialists",
+        "slug": "south-west-diesel-specialists",
+        "phone": "(03) 5561 3344",
+        "address": "19 Caramut Rd, Warrnambool VIC 3280",
+        "has_mobile_service": true,
+        "is_24_7": false,
+        "b_double_access": true,
+        "has_dpf_service": true,
+        "services": [
+          "Common Rail Fuel Injection",
+          "DPF Cleaning",
+          "Volvo & Scania Diagnostics"
+        ]
+      }
+    ]
+  },
+  {
+    "suburb": "Heywood",
+    "state": "VIC",
+    "postcode": "3304",
+    "corridor": "geelong-portland-princes-west",
+    "lat": -38.1322,
+    "lng": 141.6311,
+    "businesses": [
+      {
+        "name": "Heywood Truck & Diesel Services",
+        "slug": "heywood-truck-diesel-services",
+        "phone": "(03) 5527 1990",
+        "address": "Princes Hwy & Henty Hwy Junction, Heywood VIC 3304",
+        "has_mobile_service": true,
+        "is_24_7": true,
+        "b_double_access": true,
+        "has_dpf_service": false,
+        "services": [
+          "Forestry Jinkers",
+          "Mobile Field Ute",
+          "Green Triangle Callouts",
+          "Air Brakes"
+        ]
+      }
+    ]
+  },
+  {
+    "suburb": "Portland",
+    "state": "VIC",
+    "postcode": "3305",
+    "corridor": "geelong-portland-princes-west",
+    "lat": -38.3463,
+    "lng": 141.6042,
+    "businesses": [
+      {
+        "name": "Portland Heavy Vehicle Repairs",
+        "slug": "portland-heavy-vehicle-repairs",
+        "phone": "(03) 5523 4411",
+        "address": "15 Industrial Drive, Portland VIC 3305",
+        "has_mobile_service": true,
+        "is_24_7": true,
+        "b_double_access": true,
+        "has_dpf_service": false,
+        "services": [
+          "Port Logistics",
+          "Woodchip Tippers",
+          "Wheel-End Rebuilds",
+          "Turntable Overhauls"
+        ]
       }
     ]
   }

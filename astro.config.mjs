@@ -7,7 +7,7 @@ export default defineConfig({
   output: 'server',
   adapter: cloudflare({
     imageService: 'cloudflare',
-    mode: 'directory'
+    mode: 'advanced'
   }),
   integrations: [sitemap()],
 });

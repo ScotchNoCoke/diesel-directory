@@ -1,6 +1,7 @@
 ---
 import { env } from 'cloudflare:workers';
 import Layout from '../layouts/Layout.astro';
+import rawData from '../data/suburbs.json';
 
 type ContactRecord = {
   id: string;
@@ -17,6 +18,9 @@ type ContactRecord = {
 export const prerender = false;
 
 let contacts: ContactRecord[] = [];
+let claimTokens: any[] = [];
+let claimedUsers: any[] = [];
+let dispatchInquiries: any[] = [];
 let error: string | null = null;
 
 if (env.DB) {
@@ -25,6 +29,21 @@ if (env.DB) {
       'SELECT * FROM admin_contacts ORDER BY created_at DESC LIMIT 100'
     ).all<ContactRecord>();
     contacts = results || [];
+
+    const tokensRes = await env.DB.prepare(
+      'SELECT * FROM claim_tokens ORDER BY created_at DESC'
+    ).all();
+    claimTokens = tokensRes.results || [];
+
+    const usersRes = await env.DB.prepare(
+      'SELECT business_id, email, created_at FROM users'
+    ).all();
+    claimedUsers = usersRes.results || [];
+
+    const inquiriesRes = await env.DB.prepare(
+      'SELECT * FROM dispatch_inquiries ORDER BY created_at DESC LIMIT 100'
+    ).all();
+    dispatchInquiries = inquiriesRes.results || [];
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
   }
@@ -33,11 +52,64 @@ if (env.DB) {
 const newCount = contacts.filter((contact) => contact.status === 'new').length;
 const resolvedCount = contacts.filter((contact) => contact.status === 'resolved').length;
 const activeCount = contacts.length - resolvedCount;
+
+// Flatten directory workshops
+const allSuburbs = Array.isArray(rawData) ? rawData : ((rawData as any)?.suburbs || (rawData as any)?.default || []);
+const allWorkshops: any[] = [];
+allSuburbs.forEach((sub: any) => {
+  const list = sub.businesses || sub.items || [];
+  list.forEach((b: any) => {
+    const slug = b.slug || b.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    allWorkshops.push({
+      ...b,
+      slug,
+      suburb: sub.suburb || 'Local',
+      state: sub.state || 'VIC',
+    });
+  });
+});
+
+const workshopsWithStatus = allWorkshops.map((biz) => {
+  const claimedUser = claimedUsers.find((u) => u.business_id === biz.slug);
+  const latestToken = claimTokens.find((t) => t.business_id === biz.slug);
+
+  const matchedContact = contacts.find((c) => {
+    const company = (c.company_name || '').toLowerCase();
+    const msg = (c.message || '').toLowerCase();
+    const bName = biz.name.toLowerCase();
+    const bSlug = biz.slug.toLowerCase();
+    return company.includes(bName) || msg.includes(bSlug) || msg.includes(bName);
+  });
+
+  let status: 'claimed' | 'pending' | 'uncontacted' = 'uncontacted';
+  if (claimedUser || (latestToken && latestToken.claimed_at)) {
+    status = 'claimed';
+  } else if (latestToken && !latestToken.claimed_at) {
+    status = 'pending';
+  }
+
+  const displayEmail =
+    claimedUser?.email ||
+    latestToken?.recipient_email ||
+    biz.email ||
+    biz.contact_email ||
+    matchedContact?.email ||
+    '';
+
+  return {
+    ...biz,
+    status,
+    claimedEmail: displayEmail,
+    lastToken: latestToken,
+  };
+});
 ---
 
-<Layout title="Admin Centre | Contact Triage | Diesel Hub">
+<Layout title="Admin Centre | Diesel Hub Australia">
   <main class="min-h-screen bg-zinc-950 px-4 py-8 text-slate-100 sm:px-6 sm:py-12 lg:px-8">
     <div class="mx-auto max-w-7xl space-y-8">
+      
+      <!-- Operations Header -->
       <header class="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 shadow-2xl sm:p-8">
         <div class="absolute inset-y-0 left-0 w-1.5 bg-amber-500"></div>
         <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
@@ -48,135 +120,348 @@ const activeCount = contacts.length - resolvedCount;
             </div>
             <div>
               <h1 class="font-mono text-2xl font-black tracking-tight text-white sm:text-3xl">
-                Inbound contact triage
+                Diesel Hub Command Centre
               </h1>
               <p class="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-                Review fleet inquiries, emergency dispatch requests, and workshop claims from across the DieselHub directory.
+                Dispatch verified listing invites to workshop managers, monitor active callouts, and triage leads.
               </p>
             </div>
           </div>
+          
           <div class="flex shrink-0 flex-wrap items-center gap-3">
+            <input
+              id="admin-key-input"
+              type="password"
+              placeholder="Paste ADMIN_API_KEY..."
+              class="px-3.5 py-2 bg-zinc-950 border border-zinc-700 rounded-lg text-xs font-mono text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500"
+            />
             <button
-              id="refresh-queue"
               type="button"
-              class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 font-mono text-xs font-bold uppercase tracking-wide text-slate-200 transition hover:border-amber-500/50 hover:text-amber-400"
+              id="save-key-btn"
+              class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs font-mono text-zinc-200 rounded-lg transition cursor-pointer"
             >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M5.6 9A7 7 0 0 1 18 6l2 3M4 15l2 3a7 7 0 0 0 12.4-3" />
-              </svg>
-              Refresh queue
+              Save Key
             </button>
             <a
               href="/"
-              class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2.5 font-mono text-xs font-black uppercase tracking-wide text-zinc-950 shadow-lg shadow-amber-500/10 transition hover:bg-amber-400"
+              class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 font-mono text-xs font-black uppercase tracking-wide text-zinc-950 shadow-lg shadow-amber-500/10 transition hover:bg-amber-400"
             >
-              Directory
-              <span aria-hidden="true">↗</span>
+              Directory ↗
             </a>
           </div>
         </div>
+
+        <!-- Navigation Tabs -->
+        <div class="mt-8 flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-5">
+          <button
+            type="button"
+            id="tab-btn-outreach"
+            class="tab-btn px-4 py-2 rounded-lg font-mono text-xs font-bold uppercase tracking-wider transition bg-amber-500 text-zinc-950 shadow-md cursor-pointer"
+          >
+            ✉️ Mechanic Claim Outreach ({workshopsWithStatus.length})
+          </button>
+          <button
+            type="button"
+            id="tab-btn-dispatch"
+            class="tab-btn px-4 py-2 rounded-lg font-mono text-xs font-bold uppercase tracking-wider transition bg-zinc-900 text-zinc-400 hover:text-white cursor-pointer"
+          >
+            🚨 Live Breakdown Callouts ({dispatchInquiries.length})
+          </button>
+          <button
+            type="button"
+            id="tab-btn-contacts"
+            class="tab-btn px-4 py-2 rounded-lg font-mono text-xs font-bold uppercase tracking-wider transition bg-zinc-900 text-zinc-400 hover:text-white cursor-pointer"
+          >
+            📥 Inbound Inquiries ({newCount} New)
+          </button>
+        </div>
       </header>
 
-      <section class="grid gap-4 sm:grid-cols-3" aria-label="Inbox summary">
-        <div class="rounded-xl border border-slate-800 bg-slate-900/70 p-5">
-          <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-slate-400">New requests</p>
-          <p class="mt-3 font-mono text-3xl font-black text-amber-400">{newCount}</p>
-          <p class="mt-1 text-xs text-slate-500">Awaiting initial review</p>
-        </div>
-        <div class="rounded-xl border border-slate-800 bg-slate-900/70 p-5">
-          <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-slate-400">Active queue</p>
-          <p class="mt-3 font-mono text-3xl font-black text-white">{activeCount}</p>
-          <p class="mt-1 text-xs text-slate-500">Not yet resolved</p>
-        </div>
-        <div class="rounded-xl border border-slate-800 bg-slate-900/70 p-5">
-          <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-slate-400">Resolved</p>
-          <p class="mt-3 font-mono text-3xl font-black text-emerald-400">{resolvedCount}</p>
-          <p class="mt-1 text-xs text-slate-500">Completed requests in this view</p>
-        </div>
-      </section>
-
       {error && (
-        <div role="alert" class="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-          <span class="font-mono font-bold uppercase tracking-wide">Queue unavailable:</span> {error}
+        <div role="alert" class="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300 font-mono">
+          <span class="font-bold">Queue / DB Error:</span> {error}
         </div>
       )}
 
-      <div id="admin-feedback" class="hidden rounded-xl border p-4 text-sm" role="status" aria-live="polite"></div>
-
-      <section class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 shadow-xl">
-        <div class="flex flex-col gap-2 border-b border-slate-800 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
-          <div>
-            <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-amber-500">Contact queue</p>
-            <h2 class="mt-1 text-lg font-bold text-white">Latest submissions</h2>
+      <!-- TAB 1: MECHANIC CLAIM OUTREACH -->
+      <div id="tab-panel-outreach" class="space-y-6">
+        <section class="grid gap-4 sm:grid-cols-3">
+          <div class="rounded-xl border border-slate-800 bg-slate-900/70 p-5">
+            <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-slate-400">Total Workshops</p>
+            <p class="mt-3 font-mono text-3xl font-black text-white">{workshopsWithStatus.length}</p>
+            <p class="mt-1 text-xs text-slate-500">Indexed in directory</p>
           </div>
-          <p class="font-mono text-xs text-slate-500">Showing up to 100 recent requests</p>
-        </div>
+          <div class="rounded-xl border border-slate-800 bg-slate-900/70 p-5">
+            <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-amber-400">Invites Dispatched (Pending)</p>
+            <p class="mt-3 font-mono text-3xl font-black text-amber-400">
+              {workshopsWithStatus.filter((w) => w.status === 'pending').length}
+            </p>
+            <p class="mt-1 text-xs text-slate-500">Awaiting password completion</p>
+          </div>
+          <div class="rounded-xl border border-slate-800 bg-slate-900/70 p-5">
+            <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-emerald-400">Verified Workshop Profiles</p>
+            <p class="mt-3 font-mono text-3xl font-black text-emerald-400">
+              {workshopsWithStatus.filter((w) => w.status === 'claimed').length}
+            </p>
+            <p class="mt-1 text-xs text-slate-500">Active claimed owners</p>
+          </div>
+        </section>
 
-        <div class="overflow-x-auto">
-          <table class="w-full min-w-[850px] text-left text-sm">
-            <thead class="bg-slate-950/70 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              <tr>
-                <th scope="col" class="px-5 py-4">Received</th>
-                <th scope="col" class="px-5 py-4">Category</th>
-                <th scope="col" class="px-5 py-4">Contact</th>
-                <th scope="col" class="px-5 py-4">Message</th>
-                <th scope="col" class="px-5 py-4">Status</th>
-                <th scope="col" class="px-5 py-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800/80">
-              {contacts.length === 0 ? (
+        <section class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 shadow-xl">
+          <div class="flex flex-col gap-2 border-b border-slate-800 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+            <div>
+              <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-amber-500">Claim Outreach</p>
+              <h2 class="mt-1 text-lg font-bold text-white">Directory Workshops</h2>
+            </div>
+            <p class="font-mono text-xs text-slate-500">Directly syncs to D1 claim_tokens & Resend</p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[850px] text-left text-xs font-mono">
+              <thead class="bg-slate-950/70 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 <tr>
-                  <td colspan="6" class="px-5 py-16 text-center">
-                    <div class="mx-auto flex max-w-sm flex-col items-center gap-3">
-                      <span class="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-950 font-mono text-xl text-slate-500">—</span>
-                      <div>
-                        <p class="font-semibold text-slate-200">The inbox is clear</p>
-                        <p class="mt-1 text-sm text-slate-500">New inquiries and dispatch requests will appear here.</p>
-                      </div>
-                    </div>
-                  </td>
+                  <th scope="col" class="px-5 py-4">Workshop</th>
+                  <th scope="col" class="px-5 py-4">Location</th>
+                  <th scope="col" class="px-5 py-4">Status</th>
+                  <th scope="col" class="px-5 py-4">Mechanic Email</th>
+                  <th scope="col" class="px-5 py-4 text-right">Action</th>
                 </tr>
-              ) : (
-                contacts.map((item) => {
-                  const categoryClass =
-                    item.category === 'emergency'
-                      ? 'border-red-500/30 bg-red-500/10 text-red-300'
-                      : item.category === 'quote_callout'
-                        ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
-                        : 'border-slate-700 bg-slate-800/70 text-slate-300';
-                  const statusClass =
-                    item.status === 'new'
-                      ? 'bg-blue-500/10 text-blue-300'
-                      : item.status === 'in_progress'
-                        ? 'bg-amber-500/10 text-amber-300'
-                        : item.status === 'resolved'
-                          ? 'bg-emerald-500/10 text-emerald-300'
-                          : 'bg-slate-800 text-slate-400';
+              </thead>
+              <tbody class="divide-y divide-slate-800/80">
+                {workshopsWithStatus.map((biz) => {
+                  const isClaimed = biz.status === 'claimed';
+                  const isPending = biz.status === 'pending';
 
                   return (
+                    <tr class="transition-colors hover:bg-slate-800/40">
+                      <td class="px-5 py-4 font-bold text-white">
+                        <div class="text-sm">{biz.name}</div>
+                        <div class="text-[10px] font-normal text-slate-500">{biz.slug} {biz.phone ? `· ${biz.phone}` : ''}</div>
+                      </td>
+                      <td class="px-5 py-4 text-slate-300">
+                        {biz.suburb}, {biz.state}
+                      </td>
+                      <td class="px-5 py-4">
+                        {isClaimed ? (
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] uppercase font-bold">
+                            ✓ Claimed
+                          </span>
+                        ) : isPending ? (
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] uppercase font-bold">
+                            ⏳ Pending Invite
+                          </span>
+                        ) : (
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px] uppercase font-bold">
+                            Uncontacted
+                          </span>
+                        )}
+                      </td>
+                      <td class="px-5 py-4">
+                        <input
+                          type="email"
+                          id={`email-${biz.slug}`}
+                          placeholder="service@workshop.com.au"
+                          value={biz.claimedEmail || ''}
+                          class="w-64 px-3 py-1.5 bg-zinc-950 border border-zinc-700 rounded text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                          disabled={isClaimed}
+                        />
+                      </td>
+                      <td class="px-5 py-4 text-right">
+                        <div class="inline-flex items-center gap-2">
+                          {isPending && biz.lastToken && (
+                            <a
+                              href={`https://dieselhub.com.au/claim?token=${biz.lastToken.token}`}
+                              target="_blank"
+                              class="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[11px] transition"
+                              title="Test link without checking email"
+                            >
+                              🔗 Copy Link
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            class="dispatch-claim-btn px-3 py-1.5 rounded text-xs font-bold transition flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            class:list={[
+                              isClaimed
+                                ? 'bg-zinc-800 text-zinc-500'
+                                : 'bg-amber-500 hover:bg-amber-400 text-zinc-950',
+                            ]}
+                            disabled={isClaimed}
+                            data-slug={biz.slug}
+                            data-name={biz.name}
+                            data-suburb={biz.suburb}
+                            data-state={biz.state}
+                          >
+                            <span>✉️</span>
+                            <span>{isPending ? 'Resend' : 'Send Claim'}</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- TAB 2: LIVE BREAKDOWN CALLOUTS (WITH WORKSHOP RE-ALLOCATION) -->
+      <div id="tab-panel-dispatch" class="hidden space-y-6">
+        <section class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 shadow-xl">
+          <div class="flex flex-col gap-2 border-b border-slate-800 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+            <div>
+              <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-amber-500">Live Breakdown Requests</p>
+              <h2 class="mt-1 text-lg font-bold text-white">Driver Inquiries & Workshop Assignment</h2>
+            </div>
+            <p class="font-mono text-xs text-slate-500">Re-route jobs directly to any workshop</p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[950px] text-left text-xs font-mono">
+              <thead class="bg-slate-950/70 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <tr>
+                  <th scope="col" class="px-5 py-4">Received / ID</th>
+                  <th scope="col" class="px-5 py-4">Driver & Breakdown Info</th>
+                  <th scope="col" class="px-5 py-4">Current Workshop</th>
+                  <th scope="col" class="px-5 py-4">Re-allocate Workshop</th>
+                  <th scope="col" class="px-5 py-4 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/80">
+                {dispatchInquiries.length === 0 ? (
+                  <tr>
+                    <td colspan="5" class="px-5 py-12 text-center text-slate-500">
+                      No breakdown dispatch inquiries logged yet.
+                    </td>
+                  </tr>
+                ) : (
+                  dispatchInquiries.map((inq: any) => {
+                    const assignedWorkshop = allWorkshops.find((w) => w.slug === inq.business_id);
+                    return (
+                      <tr class="transition-colors hover:bg-slate-800/40">
+                        <td class="px-5 py-4">
+                          <div class="text-white font-bold">{new Date(inq.created_at * 1000).toLocaleString('en-AU', { dateStyle: 'short', timeStyle: 'short' })}</div>
+                          <div class="text-[10px] text-slate-500 font-mono mt-0.5">{inq.id}</div>
+                        </td>
+                        <td class="px-5 py-4 max-w-xs">
+                          <div class="text-white font-bold">{inq.driver_name} · <a href={`tel:${inq.driver_phone}`} class="text-amber-400 underline">{inq.driver_phone}</a></div>
+                          <div class="text-[11px] text-amber-300/80 font-medium mt-0.5">📍 {inq.breakdown_location || 'Not specified'} ({inq.vehicle_type || 'Rigid / Prime Mover'})</div>
+                          <div class="text-[11px] text-slate-300 mt-1 italic">&ldquo;{inq.issue_description}&rdquo;</div>
+                        </td>
+                        <td class="px-5 py-4">
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold text-[11px]">
+                            🏢 {assignedWorkshop?.name || inq.business_id}
+                          </span>
+                          <div class="text-[10px] text-slate-500 mt-1">{assignedWorkshop?.suburb ? `${assignedWorkshop.suburb}, ${assignedWorkshop.state}` : ''}</div>
+                        </td>
+                        <td class="px-5 py-4">
+                          <div class="flex items-center gap-2">
+                            <select
+                              id={`select-biz-${inq.id}`}
+                              class="bg-zinc-950 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500 w-52"
+                            >
+                              {allWorkshops.map((w) => (
+                                <option value={w.slug} selected={w.slug === inq.business_id}>
+                                  {w.name} ({w.suburb})
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              class="reallocate-btn px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded text-[11px] transition cursor-pointer"
+                              data-inquiry-id={inq.id}
+                            >
+                              Re-route
+                            </button>
+                          </div>
+                        </td>
+                        <td class="px-5 py-4 text-right">
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-300">
+                            {inq.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- TAB 3: INBOUND GENERAL INQUIRIES -->
+      <div id="tab-panel-contacts" class="hidden space-y-6">
+        <section class="grid gap-4 sm:grid-cols-3">
+          <div class="rounded-xl border border-slate-800 bg-slate-900/70 p-5">
+            <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-slate-400">New requests</p>
+            <p class="mt-3 font-mono text-3xl font-black text-amber-400">{newCount}</p>
+            <p class="mt-1 text-xs text-slate-500">Awaiting initial review</p>
+          </div>
+          <div class="rounded-xl border border-slate-800 bg-slate-900/70 p-5">
+            <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-slate-400">Active queue</p>
+            <p class="mt-3 font-mono text-3xl font-black text-white">{activeCount}</p>
+            <p class="mt-1 text-xs text-slate-500">Not yet resolved</p>
+          </div>
+          <div class="rounded-xl border border-slate-800 bg-slate-900/70 p-5">
+            <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-emerald-400">Resolved</p>
+            <p class="mt-3 font-mono text-3xl font-black text-emerald-400">{resolvedCount}</p>
+            <p class="mt-1 text-xs text-slate-500">Completed requests</p>
+          </div>
+        </section>
+
+        <section class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 shadow-xl">
+          <div class="flex flex-col gap-2 border-b border-slate-800 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+            <div>
+              <p class="font-mono text-[11px] font-bold uppercase tracking-widest text-amber-500">Contact queue</p>
+              <h2 class="mt-1 text-lg font-bold text-white">General Inbound Submissions</h2>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[850px] text-left text-sm">
+              <thead class="bg-slate-950/70 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <tr>
+                  <th scope="col" class="px-5 py-4">Received</th>
+                  <th scope="col" class="px-5 py-4">Category</th>
+                  <th scope="col" class="px-5 py-4">Contact</th>
+                  <th scope="col" class="px-5 py-4">Message</th>
+                  <th scope="col" class="px-5 py-4">Status</th>
+                  <th scope="col" class="px-5 py-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/80">
+                {contacts.length === 0 ? (
+                  <tr>
+                    <td colspan="6" class="px-5 py-16 text-center">
+                      <p class="font-semibold text-slate-200">The inbox is clear</p>
+                      <p class="mt-1 text-sm text-slate-500">New general inquiries will appear here.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  contacts.map((item) => (
                     <tr class="transition-colors hover:bg-slate-800/40">
                       <td class="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-400">
                         {new Date(item.created_at).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })}
                       </td>
                       <td class="px-5 py-4">
-                        <span class={`inline-flex rounded-md border px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wide ${categoryClass}`}>
+                        <span class="inline-flex rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 font-mono text-[10px] font-bold uppercase text-amber-300">
                           {item.category.replaceAll('_', ' ')}
                         </span>
                       </td>
                       <td class="px-5 py-4">
                         <p class="font-semibold text-slate-100">{item.name}</p>
-                        {item.company_name && <p class="mt-0.5 text-xs text-slate-400">{item.company_name}</p>}
                         <div class="mt-1.5 flex flex-col items-start gap-1 font-mono text-xs">
-                          <a href={`mailto:${item.email}`} class="text-amber-400 transition hover:text-amber-300 hover:underline">{item.email}</a>
-                          {item.phone && <a href={`tel:${item.phone}`} class="text-slate-400 transition hover:text-slate-200">{item.phone}</a>}
+                          <a href={`mailto:${item.email}`} class="text-amber-400 underline">{item.email}</a>
+                          {item.phone && <a href={`tel:${item.phone}`} class="text-slate-400">{item.phone}</a>}
                         </div>
                       </td>
                       <td class="max-w-sm px-5 py-4 text-slate-300">
-                        <p class="line-clamp-2" title={item.message}>{item.message}</p>
+                        <p class="line-clamp-2">{item.message}</p>
                       </td>
                       <td class="px-5 py-4">
-                        <span class={`inline-flex rounded-full px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wide ${statusClass}`}>
+                        <span class="inline-flex rounded-full px-2.5 py-1 font-mono text-[10px] font-bold uppercase bg-slate-800 text-slate-400">
                           {item.status.replaceAll('_', ' ')}
                         </span>
                       </td>
@@ -185,54 +470,192 @@ const activeCount = contacts.length - resolvedCount;
                           type="button"
                           data-contact-id={item.id}
                           data-next-status={item.status === 'resolved' ? 'new' : 'resolved'}
-                          class="contact-status-button cursor-pointer rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-wide text-slate-200 transition hover:border-amber-500/50 hover:text-amber-300 disabled:cursor-wait disabled:opacity-50"
+                          class="contact-status-button cursor-pointer rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-wide text-slate-200 hover:text-amber-300"
                         >
                           {item.status === 'resolved' ? 'Reopen' : 'Resolve'}
                         </button>
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
     </div>
   </main>
 
-  <script>
-    const refreshButton = document.querySelector<HTMLButtonElement>('#refresh-queue');
-    const feedback = document.querySelector<HTMLDivElement>('#admin-feedback');
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Tab switcher
+      const tabOutreach = document.getElementById('tab-btn-outreach');
+      const tabDispatch = document.getElementById('tab-btn-dispatch');
+      const tabContacts = document.getElementById('tab-btn-contacts');
 
-    refreshButton?.addEventListener('click', () => window.location.reload());
+      const panelOutreach = document.getElementById('tab-panel-outreach');
+      const panelDispatch = document.getElementById('tab-panel-dispatch');
+      const panelContacts = document.getElementById('tab-panel-contacts');
 
-    document.querySelectorAll<HTMLButtonElement>('.contact-status-button').forEach((button) => {
-      button.addEventListener('click', async () => {
-        const { contactId, nextStatus } = button.dataset;
-        if (!contactId || !nextStatus || !feedback) return;
+      const inactiveTabClass = 'tab-btn px-4 py-2 rounded-lg font-mono text-xs font-bold uppercase tracking-wider transition bg-zinc-900 text-zinc-400 hover:text-white cursor-pointer';
+      const activeTabClass = 'tab-btn px-4 py-2 rounded-lg font-mono text-xs font-bold uppercase tracking-wider transition bg-amber-500 text-zinc-950 shadow-md cursor-pointer';
 
-        button.disabled = true;
-        feedback.className = 'rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-300';
-        feedback.textContent = 'Updating contact status…';
+      tabOutreach?.addEventListener('click', () => {
+        panelOutreach?.classList.remove('hidden');
+        panelDispatch?.classList.add('hidden');
+        panelContacts?.classList.add('hidden');
+        tabOutreach.className = activeTabClass;
+        tabDispatch.className = inactiveTabClass;
+        tabContacts.className = inactiveTabClass;
+      });
 
-        try {
-          const response = await fetch('/api/admin/contacts', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: contactId, status: nextStatus }),
-          });
+      tabDispatch?.addEventListener('click', () => {
+        panelDispatch?.classList.remove('hidden');
+        panelOutreach?.classList.add('hidden');
+        panelContacts?.classList.add('hidden');
+        tabDispatch.className = activeTabClass;
+        tabOutreach.className = inactiveTabClass;
+        tabContacts.className = inactiveTabClass;
+      });
 
-          if (!response.ok) {
-            throw new Error(`Status update failed (${response.status}). Please try again.`);
+      tabContacts?.addEventListener('click', () => {
+        panelContacts?.classList.remove('hidden');
+        panelOutreach?.classList.add('hidden');
+        panelDispatch?.classList.add('hidden');
+        tabContacts.className = activeTabClass;
+        tabOutreach.className = inactiveTabClass;
+        tabDispatch.className = inactiveTabClass;
+      });
+
+      // Admin key management
+      const keyInput = document.getElementById('admin-key-input');
+      const saveKeyBtn = document.getElementById('save-key-btn');
+      const savedKey = localStorage.getItem('diesel_admin_key');
+      if (savedKey && keyInput) keyInput.value = savedKey;
+
+      saveKeyBtn?.addEventListener('click', () => {
+        localStorage.setItem('diesel_admin_key', keyInput ? keyInput.value.trim() : '');
+        alert('Admin API Key saved.');
+      });
+
+      // Re-allocation Handler
+      document.querySelectorAll('.reallocate-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const adminKey = keyInput ? keyInput.value.trim() : '';
+          if (!adminKey) {
+            alert('Please paste the ADMIN_API_KEY in the top header first.');
+            keyInput?.focus();
+            return;
           }
 
-          window.location.reload();
-        } catch (error) {
-          feedback.className = 'rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300';
-          feedback.textContent = error instanceof Error ? error.message : 'Unable to update the contact status.';
-          button.disabled = false;
-        }
+          const inquiryId = btn.getAttribute('data-inquiry-id');
+          const select = document.getElementById(`select-biz-${inquiryId}`);
+          const targetBusinessId = select ? select.value : '';
+
+          if (!inquiryId || !targetBusinessId) return;
+
+          const originalText = btn.innerHTML;
+          btn.innerHTML = 'Updating...';
+          btn.setAttribute('disabled', 'true');
+
+          try {
+            const res = await fetch('/api/admin/reallocate-inquiry', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${adminKey}`,
+              },
+              body: JSON.stringify({
+                adminKey,
+                inquiryId,
+                targetBusinessId,
+              }),
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+              btn.innerHTML = '✓ Re-routed';
+              btn.classList.remove('bg-amber-500', 'text-zinc-950');
+              btn.classList.add('bg-emerald-600', 'text-white');
+              setTimeout(() => {
+                window.location.reload();
+              }, 600);
+            } else {
+              alert(`Error: ${data.error || 'Server error'}`);
+              btn.innerHTML = originalText;
+              btn.removeAttribute('disabled');
+            }
+          } catch (err) {
+            alert(`Network error: ${err.message}`);
+            btn.innerHTML = originalText;
+            btn.removeAttribute('disabled');
+          }
+        });
+      });
+
+      // Claim send handler
+      document.querySelectorAll('.dispatch-claim-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const adminKey = keyInput ? keyInput.value.trim() : '';
+          if (!adminKey) {
+            alert('Please paste the ADMIN_API_KEY in the top header first.');
+            keyInput?.focus();
+            return;
+          }
+
+          const slug = btn.getAttribute('data-slug');
+          const name = btn.getAttribute('data-name');
+          const suburb = btn.getAttribute('data-suburb');
+          const state = btn.getAttribute('data-state');
+          const emailInput = document.getElementById(`email-${slug}`);
+          const email = emailInput ? emailInput.value.trim() : '';
+
+          if (!email || !email.includes('@')) {
+            alert(`Please enter a valid email for ${name}`);
+            emailInput?.focus();
+            return;
+          }
+
+          const originalText = btn.innerHTML;
+          btn.innerHTML = 'Sending...';
+          btn.setAttribute('disabled', 'true');
+
+          try {
+            const res = await fetch('/api/admin/send-claim', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${adminKey}`,
+              },
+              body: JSON.stringify({
+                adminKey,
+                businessId: slug,
+                businessName: name,
+                businessSlug: slug,
+                suburb,
+                state,
+                recipientEmail: email,
+              }),
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+              btn.innerHTML = '✓ Dispatched';
+              btn.classList.remove('bg-amber-500', 'text-zinc-950');
+              btn.classList.add('bg-emerald-600', 'text-white');
+              alert(`Claim email sent to ${email}!\nMagic link:\n${data.claimUrl}`);
+            } else {
+              alert(`Error: ${data.error || 'Server error'}`);
+              btn.innerHTML = originalText;
+              btn.removeAttribute('disabled');
+            }
+          } catch (err) {
+            alert(`Network error: ${err.message}`);
+            btn.innerHTML = originalText;
+            btn.removeAttribute('disabled');
+          }
+        });
       });
     });
   </script>

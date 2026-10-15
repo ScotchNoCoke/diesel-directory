@@ -1,0 +1,34 @@
+---
+interface Props {
+  lat?: number;
+  lng?: number;
+  name?: string;
+  className?: string;
+}
+
+const { lat, lng, name = "Location", className = "w-9 h-7" } = Astro.props;
+
+// Safe fallback coordinates (Geelong / Central VIC approx) if coordinates are missing
+const safeLat = typeof lat === "number" && !isNaN(lat) ? lat : -37.8136;
+const safeLng = typeof lng === "number" && !isNaN(lng) ? lng : 144.9631;
+
+const minLng = 138.0;
+const maxLng = 152.0;
+const minLat = -39.2;
+const maxLat = -33.0;
+
+const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max);
+const x = Math.round(((clamp(safeLng, minLng, maxLng) - minLng) / (maxLng - minLng)) * 100);
+const y = Math.round(((maxLat - clamp(safeLat, minLat, maxLat)) / (maxLat - minLat)) * 70);
+---
+
+<div class={`relative inline-flex items-center justify-center shrink-0 rounded bg-zinc-900 border border-zinc-800 p-1 group hover:border-amber-500/50 transition-colors ${className}`} title={`Location: ${name}`}>
+  <svg viewBox="0 0 100 70" class="w-full h-full opacity-80" fill="none" stroke="currentColor">
+    <line x1="20" y1="20" x2="20" y2="65" stroke="#3f3f46" stroke-width="1.5" stroke-dasharray="2 2" />
+    <path d="M 20 40 Q 40 42, 60 38 T 85 45" stroke="#3f3f46" stroke-width="1.5" stroke-dasharray="2 2" />
+    <path d="M 10 50 Q 20 62, 45 62 T 75 66 Q 90 60, 95 30" stroke="#52525b" stroke-width="1" />
+    
+    <circle cx={x} cy={y} r="5" fill="#f59e0b" class="opacity-30 animate-ping origin-center" />
+    <circle cx={x} cy={y} r="2.5" fill="#f59e0b" stroke="#18181b" stroke-width="0.75" />
+  </svg>
+</div>
